@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mockhu-app-backend/internal/app/auth"
-	"github.com/mockhu-app-backend/internal/app/onboarding"
-	"github.com/mockhu-app-backend/internal/app/upload"
+	"mockhu-app-backend/internal/app/auth"
+	"mockhu-app-backend/internal/app/onboarding"
+	"mockhu-app-backend/internal/app/upload"
 )
 
 func main() {
