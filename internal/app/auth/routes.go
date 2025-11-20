@@ -1,17 +1,16 @@
 package auth
 
-import "github.com/gin-gonic/gin"
+import "github.com/gofiber/fiber/v2"
 
-func RegisterRoutes(r *gin.Engine) {
+func RegisterRoutes(app *fiber.App) {
 	handler := NewHandler()
 
-	auth := r.Group("/v1/auth")
-	{
-		auth.POST("/signup", handler.Signup)
-		auth.POST("/verify", handler.Verify)
-		auth.POST("/login", handler.Login)
-		auth.POST("/refresh", handler.Refresh)
-		auth.POST("/logout", handler.Logout)
-		auth.POST("/resend", handler.Resend)
-	}
+	auth := app.Group("/v1/auth")
+
+	auth.Post("/signup", handler.Signup)
+	auth.Post("/verify", handler.Verify)
+	auth.Post("/login", handler.Login)
+	auth.Post("/refresh", handler.Refresh)
+	auth.Post("/logout", handler.Logout)
+	auth.Post("/resend", handler.Resend)
 }

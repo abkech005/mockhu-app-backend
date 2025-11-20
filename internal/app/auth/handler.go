@@ -1,9 +1,7 @@
 package auth
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type Handler struct {
@@ -15,28 +13,26 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) Signup(c *gin.Context) {
+func (h *Handler) Signup(c *fiber.Ctx) error {
 	var req SignupRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, SignupResponse{
+	return c.JSON(SignupResponse{
 		UserID:              "user-uuid-12345",
 		VerificationNeeded:  true,
 		VerificationChannel: req.Method,
 	})
 }
 
-func (h *Handler) Verify(c *gin.Context) {
+func (h *Handler) Verify(c *fiber.Ctx) error {
 	var req VerifyRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, VerifyResponse{
+	return c.JSON(VerifyResponse{
 		AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy",
 		RefreshToken: "refresh-token-dummy",
 		ExpiresIn:    900,
@@ -48,54 +44,50 @@ func (h *Handler) Verify(c *gin.Context) {
 	})
 }
 
-func (h *Handler) Login(c *gin.Context) {
+func (h *Handler) Login(c *fiber.Ctx) error {
 	var req LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, LoginResponse{
+	return c.JSON(LoginResponse{
 		AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy",
 		RefreshToken: "refresh-token-dummy",
 		ExpiresIn:    900,
 	})
 }
 
-func (h *Handler) Refresh(c *gin.Context) {
+func (h *Handler) Refresh(c *fiber.Ctx) error {
 	var req RefreshRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, RefreshResponse{
+	return c.JSON(RefreshResponse{
 		AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.new-dummy",
 		RefreshToken: "new-refresh-token-dummy",
 		ExpiresIn:    900,
 	})
 }
 
-func (h *Handler) Logout(c *gin.Context) {
+func (h *Handler) Logout(c *fiber.Ctx) error {
 	var req LogoutRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, LogoutResponse{
+	return c.JSON(LogoutResponse{
 		Message: "logged_out",
 	})
 }
 
-func (h *Handler) Resend(c *gin.Context) {
+func (h *Handler) Resend(c *fiber.Ctx) error {
 	var req ResendRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, ResendResponse{
+	return c.JSON(ResendResponse{
 		Message: "code_sent",
 	})
 }

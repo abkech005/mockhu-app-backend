@@ -1,9 +1,7 @@
 package onboarding
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type Handler struct {
@@ -14,41 +12,38 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) Basic(c *gin.Context) {
+func (h *Handler) Basic(c *fiber.Ctx) error {
 	var req BasicRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusCreated, BasicResponse{
+	return c.Status(fiber.StatusCreated).JSON(BasicResponse{
 		TempID:  "temp-uuid-67890",
 		Message: "basic_saved",
 	})
 }
 
-func (h *Handler) Profile(c *gin.Context) {
+func (h *Handler) Profile(c *fiber.Ctx) error {
 	var req ProfileRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, ProfileResponse{
+	return c.JSON(ProfileResponse{
 		TempID:            req.TempID,
 		UsernameAvailable: true,
 		AvatarURL:         "https://cdn.example.com/avatars/dummy.jpg",
 	})
 }
 
-func (h *Handler) Interests(c *gin.Context) {
+func (h *Handler) Interests(c *fiber.Ctx) error {
 	var req InterestsRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, InterestsResponse{
+	return c.JSON(InterestsResponse{
 		Message: "interests_saved",
 	})
 }

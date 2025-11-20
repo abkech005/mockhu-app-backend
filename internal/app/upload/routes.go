@@ -1,14 +1,11 @@
 package upload
 
-import "github.com/gin-gonic/gin"
+import "github.com/gofiber/fiber/v2"
 
-//routes for upload
-
-func RegisterRoutes(r *gin.Engine) {
+func RegisterRoutes(app *fiber.App) {
 	handler := NewHandler()
 
-	upload := r.Group("/v1/upload")
-	{
-		upload.POST("/avatar", handler.Avatar)
-	}
+	upload := app.Group("/v1/upload")
+
+	upload.Post("/avatar", handler.Avatar)
 }

@@ -1,14 +1,13 @@
 package onboarding
 
-import "github.com/gin-gonic/gin"
+import "github.com/gofiber/fiber/v2"
 
-func RegisterRoutes(r *gin.Engine) {
+func RegisterRoutes(app *fiber.App) {
 	handler := NewHandler()
 
-	onboard := r.Group("/v1/onboard")
-	{
-		onboard.POST("/basic", handler.Basic)
-		onboard.POST("/profile", handler.Profile)
-		onboard.POST("/interests", handler.Interests)
-	}
+	onboard := app.Group("/v1/onboard")
+
+	onboard.Post("/basic", handler.Basic)
+	onboard.Post("/profile", handler.Profile)
+	onboard.Post("/interests", handler.Interests)
 }

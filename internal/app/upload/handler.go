@@ -1,9 +1,7 @@
 package upload
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type Handler struct {
@@ -14,16 +12,15 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) Avatar(c *gin.Context) {
+func (h *Handler) Avatar(c *fiber.Ctx) error {
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No file provided"})
-		return
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No file provided"})
 	}
 
 	_ = file // Use file later
 
-	c.JSON(http.StatusOK, AvatarResponse{
+	return c.JSON(AvatarResponse{
 		AvatarURL: "https://cdn.example.com/avatars/uploaded.jpg",
 	})
 }
