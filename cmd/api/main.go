@@ -6,10 +6,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gofiber/fiber/v2"
 	"mockhu-app-backend/internal/app/auth"
 	"mockhu-app-backend/internal/app/onboarding"
 	"mockhu-app-backend/internal/app/upload"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
 func main() {
@@ -25,8 +28,8 @@ func main() {
 		_ = app.Shutdown()
 	}()
 
-	log.Println("Server starting on :8082")
-	if err := app.Listen(":8082"); err != nil {
+	log.Println("Server starting on :8085")
+	if err := app.Listen(":8085"); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
 
@@ -37,6 +40,14 @@ func setupRouter() *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName: "Mockhu API",
 	})
+
+	// Middleware
+	app.Use(logger.New(logger.Config{
+		Format:     "[${time}] ${status} - ${method} ${path} (${latency})\n",
+		TimeFormat: "2006-01-02 15:04:05",
+		TimeZone:   "Local",
+	}))
+	app.Use(recover.New())
 
 	// Register domain routes
 	auth.RegisterRoutes(app)
