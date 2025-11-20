@@ -2,6 +2,8 @@ package upload
 
 import "github.com/gin-gonic/gin"
 
+//routes for upload
+
 func RegisterRoutes(r *gin.Engine) {
 	handler := NewHandler()
 
