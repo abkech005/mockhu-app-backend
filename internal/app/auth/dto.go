@@ -1,5 +1,6 @@
 package auth
 
+// DTos FOR AUTH
 // POST /v1/auth/signup
 type SignupRequest struct {
 	TempID      string `json:"temp_id,omitempty"`
