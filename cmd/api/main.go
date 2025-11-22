@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -9,6 +10,7 @@ import (
 	"mockhu-app-backend/internal/app/auth"
 	"mockhu-app-backend/internal/app/onboarding"
 	"mockhu-app-backend/internal/app/upload"
+	dbinfra "mockhu-app-backend/internal/infra/db"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -16,15 +18,22 @@ import (
 )
 
 func main() {
+	// Connect to database
+	ctx := context.Background()
+	pg, err := dbinfra.New(ctx, dbinfra.DatabaseURLFromEnv())
+	if err != nil {
+		log.Fatalf("Database error: %v", err)
+	}
+	defer pg.Close()
+	log.Println("✅ Database connected")
+
 	app := setupRouter()
 
 	// Graceful shutdown
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<-c
-		log.Println("Shutting down server...")
+		<-quit
 		_ = app.Shutdown()
 	}()
 
@@ -32,8 +41,6 @@ func main() {
 	if err := app.Listen(":8085"); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
-
-	log.Println("Server stopped")
 }
 
 func setupRouter() *fiber.App {
@@ -53,11 +60,6 @@ func setupRouter() *fiber.App {
 	auth.RegisterRoutes(app)
 	onboarding.RegisterRoutes(app)
 	upload.RegisterRoutes(app)
-
-	// Health check
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"status": "ok"})
-	})
 
 	return app
 }
