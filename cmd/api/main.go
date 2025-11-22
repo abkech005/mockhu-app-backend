@@ -27,7 +27,7 @@ func main() {
 	defer pg.Close()
 	log.Println("✅ Database connected")
 
-	app := setupRouter()
+	app := setupRouter(pg)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -43,7 +43,7 @@ func main() {
 	}
 }
 
-func setupRouter() *fiber.App {
+func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName: "Mockhu API",
 	})
@@ -56,8 +56,13 @@ func setupRouter() *fiber.App {
 	}))
 	app.Use(recover.New())
 
+	// Build dependency layers: Repository -> Service -> Handler
+	authRepo := auth.NewPostgresUserRepository(pg.Pool)
+	authService := auth.NewService(authRepo)
+	authHandler := auth.NewHandler(authService)
+
 	// Register domain routes
-	auth.RegisterRoutes(app)
+	auth.RegisterRoutes(app, authHandler)
 	onboarding.RegisterRoutes(app)
 	upload.RegisterRoutes(app)
 
