@@ -1,0 +1,819 @@
+{
+	"info": {
+		"_postman_id": "a18386c6-05fd-4d8d-901c-20c31811ada2",
+		"name": "Mockhu API",
+		"description": "Complete API collection for Mockhu application including Authentication, Onboarding, Interests, and Upload endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "8525016"
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Signup (Email)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"method\": \"email\",\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"auth",
+								"signup"
+							]
+						},
+						"description": "Register a new user with email. Returns user_id and verification_code."
+					},
+					"response": []
+				},
+				{
+					"name": "Signup (Mobile)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"method\": \"mobile\",\n  \"phone\": \"+1234567890\",\n  \"password\": \"{{test_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"auth",
+								"signup"
+							]
+						},
+						"description": "Register a new user with phone number."
+					},
+					"response": []
+				},
+				{
+					"name": "Send Email Verification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/send-email-verification",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"auth",
+								"send-email-verification"
+							]
+						},
+						"description": "Send verification code to user's email. Returns code (for testing only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"code\": \"{{verification_code}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/verify-email",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"auth",
+								"verify-email"
+							]
+						},
+						"description": "Verify user's email with the code received."
+					},
+					"response": []
+				},
+				{
+					"name": "Send Phone Verification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"phone_number\": \"+1234567890\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/send-phone-verification",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"auth",
+								"send-phone-verification"
+							]
+						},
+						"description": "Send verification code to user's phone number."
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Phone",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"code\": \"{{verification_code}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/verify-phone",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"auth",
+								"verify-phone"
+							]
+						},
+						"description": "Verify user's phone number with the code received."
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login with email/phone and password. (Placeholder - not implemented yet)"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Refresh access token. (Placeholder - not implemented yet)"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/v1/auth/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Logout user and invalidate tokens. (Placeholder - not implemented yet)"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for signup, login, verification, and token management"
+		},
+		{
+			"name": "2. Onboarding",
+			"item": [
+				{
+					"name": "Complete Onboarding",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"username\": \"johndoe2024\",\n  \"dob\": \"1990-01-15\",\n  \"avatar_url\": \"https://example.com/avatars/johndoe.jpg\",\n  \"interests\": [\n    \"coding\",\n    \"design\",\n    \"travel\",\n    \"music\",\n    \"reading\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/onboarding/complete",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"onboarding",
+								"complete"
+							]
+						},
+						"description": "Complete user onboarding in a single request. Saves profile data and interests."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Onboarding Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/onboarding/status/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"onboarding",
+								"status",
+								"{{user_id}}"
+							]
+						},
+						"description": "Check user's onboarding progress and next steps."
+					},
+					"response": []
+				}
+			],
+			"description": "Onboarding endpoints for profile completion and status tracking"
+		},
+		{
+			"name": "3. Interests",
+			"item": [
+				{
+					"name": "Get All Interests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/interests",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"interests"
+							]
+						},
+						"description": "Get all available interests (56 total across 8 categories)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Interests by Category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/interests?category=technology",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"interests"
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "technology",
+									"description": "Filter by: technology, arts, sports, entertainment, lifestyle, business, education, social"
+								}
+							]
+						},
+						"description": "Get interests filtered by category."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Interest Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/interests/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"interests",
+								"categories"
+							]
+						},
+						"description": "Get all interest categories with counts."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Interest (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Machine Learning\",\n  \"slug\": \"machine-learning\",\n  \"category\": \"technology\",\n  \"icon\": \"🤖\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/interests",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"interests"
+							]
+						},
+						"description": "Create a new interest (admin only - add auth later)."
+					},
+					"response": []
+				}
+			],
+			"description": "Interest management endpoints for viewing and creating interests"
+		},
+		{
+			"name": "4. User Interests",
+			"item": [
+				{
+					"name": "Get User's Interests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/users/{{user_id}}/interests",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"{{user_id}}",
+								"interests"
+							]
+						},
+						"description": "Get all interests for a specific user."
+					},
+					"response": []
+				},
+				{
+					"name": "Add User Interests",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"interest_slugs\": [\n    \"yoga\",\n    \"photography\",\n    \"cooking\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/users/{{user_id}}/interests",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"{{user_id}}",
+								"interests"
+							]
+						},
+						"description": "Add interests to a user (appends to existing interests)."
+					},
+					"response": []
+				},
+				{
+					"name": "Replace User Interests",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"interest_slugs\": [\n    \"ai-ml\",\n    \"blockchain\",\n    \"entrepreneurship\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/users/{{user_id}}/interests",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"{{user_id}}",
+								"interests"
+							]
+						},
+						"description": "Replace all user interests (overwrites existing interests)."
+					},
+					"response": []
+				},
+				{
+					"name": "Remove User Interest",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/users/{{user_id}}/interests/reading",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"{{user_id}}",
+								"interests",
+								"reading"
+							]
+						},
+						"description": "Remove a specific interest from user."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for managing user's selected interests"
+		},
+		{
+			"name": "5. Upload (Placeholder)",
+			"item": [
+				{
+					"name": "Upload File",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/upload",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"upload"
+							]
+						},
+						"description": "Upload a file (placeholder - not implemented yet)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Upload",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/upload/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"upload",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "file-id-here"
+								}
+							]
+						},
+						"description": "Get uploaded file by ID (placeholder - not implemented yet)."
+					},
+					"response": []
+				}
+			],
+			"description": "File upload endpoints (placeholder - not implemented)"
+		},
+		{
+			"name": "Test Flows",
+			"item": [
+				{
+					"name": "Complete User Journey",
+					"item": [
+						{
+							"name": "1. Signup",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    pm.environment.set(\"user_id\", jsonData.user_id);",
+											"    pm.environment.set(\"verification_code\", jsonData.verification_code);",
+											"    console.log(\"User ID:\", jsonData.user_id);",
+											"    console.log(\"Verification Code:\", jsonData.verification_code);",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"method\": \"email\",\n  \"email\": \"testuser{{$randomInt}}@example.com\",\n  \"password\": \"testpass123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/auth/signup",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"auth",
+										"signup"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "2. Verify Email",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    console.log(\"Email verified successfully\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"code\": \"{{verification_code}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/auth/verify-email",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"auth",
+										"verify-email"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "3. Complete Onboarding",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    console.log(\"Onboarding completed successfully\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\",\n  \"username\": \"testuser{{$randomInt}}\",\n  \"dob\": \"1990-01-01\",\n  \"interests\": [\"coding\", \"music\", \"travel\"]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/onboarding/complete",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"onboarding",
+										"complete"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "4. Get User Interests",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/v1/users/{{user_id}}/interests",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"users",
+										"{{user_id}}",
+										"interests"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "Complete user journey from signup to interests"
+				}
+			],
+			"description": "Test flows for common user journeys"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8085",
+			"type": "string"
+		},
+		{
+			"key": "test_email",
+			"value": "test@example.com",
+			"type": "string"
+		},
+		{
+			"key": "test_password",
+			"value": "password123",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "verification_code",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

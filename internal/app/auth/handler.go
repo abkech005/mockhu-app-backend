@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"mockhu-app-backend/internal/pkg/jwt"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -102,11 +104,25 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Generate real JWT tokens
+	// Generate JWT tokens
+	accessToken, err := jwt.GenerateAccessToken(user.ID, user.Email, user.Username)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to generate access token",
+		})
+	}
+
+	refreshToken, err := jwt.GenerateRefreshToken(user.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to generate refresh token",
+		})
+	}
+
 	return c.JSON(LoginResponse{
-		AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy-" + user.ID,
-		RefreshToken: "refresh-token-dummy-" + user.ID,
-		ExpiresIn:    900,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    int(jwt.AccessTokenDuration.Seconds()),
 	})
 }
 
@@ -120,11 +136,41 @@ func (h *Handler) Refresh(c *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Validate refresh token and issue new tokens
+	// Validate refresh token
+	claims, err := jwt.ValidateRefreshToken(req.RefreshToken)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid or expired refresh token",
+		})
+	}
+
+	// Get user from database
+	user, err := h.service.GetUserByID(c.Context(), claims.UserID)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "user not found",
+		})
+	}
+
+	// Generate new tokens
+	accessToken, err := jwt.GenerateAccessToken(user.ID, user.Email, user.Username)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to generate access token",
+		})
+	}
+
+	refreshToken, err := jwt.GenerateRefreshToken(user.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to generate refresh token",
+		})
+	}
+
 	return c.JSON(RefreshResponse{
-		AccessToken:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.new-dummy",
-		RefreshToken: "new-refresh-token-dummy",
-		ExpiresIn:    900,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    int(jwt.AccessTokenDuration.Seconds()),
 	})
 }
 
@@ -138,9 +184,10 @@ func (h *Handler) Logout(c *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Invalidate refresh token
+	// Note: With stateless JWT, logout is handled client-side by deleting tokens
+	// In production, implement token blacklist/revocation for added security
 	return c.JSON(LogoutResponse{
-		Message: "logged_out",
+		Message: "logged out successfully",
 	})
 }
 
