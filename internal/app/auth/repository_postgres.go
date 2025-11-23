@@ -49,8 +49,17 @@ func (r *PostgresUserRepository) Create(ctx context.Context, user *User) error {
 // Returns the user if found, or an error if not found or query fails.
 func (r *PostgresUserRepository) FindByID(ctx context.Context, id string) (*User, error) {
 	query := `
-		SELECT id, email, first_name, last_name, dob, username, password_hash,
-		       email_verified, phone, phone_verified, avatar_url, is_active,
+		SELECT id, email, 
+		       COALESCE(first_name, '') as first_name, 
+		       COALESCE(last_name, '') as last_name, 
+		       dob, 
+		       COALESCE(username, '') as username, 
+		       password_hash,
+		       email_verified, 
+		       COALESCE(phone, '') as phone, 
+		       phone_verified, 
+		       COALESCE(avatar_url, '') as avatar_url, 
+		       is_active,
 		       created_at, updated_at, last_login_at
 		FROM users WHERE id = $1
 	`
@@ -77,8 +86,17 @@ func (r *PostgresUserRepository) FindByID(ctx context.Context, id string) (*User
 // Returns the user if found, or an error if not found or query fails.
 func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) (*User, error) {
 	query := `
-		SELECT id, email, first_name, last_name, dob, username, password_hash,
-		       email_verified, phone, phone_verified, avatar_url, is_active,
+		SELECT id, email, 
+		       COALESCE(first_name, '') as first_name, 
+		       COALESCE(last_name, '') as last_name, 
+		       dob, 
+		       COALESCE(username, '') as username, 
+		       password_hash,
+		       email_verified, 
+		       COALESCE(phone, '') as phone, 
+		       phone_verified, 
+		       COALESCE(avatar_url, '') as avatar_url, 
+		       is_active,
 		       created_at, updated_at, last_login_at
 		FROM users WHERE email = $1
 	`
@@ -105,8 +123,17 @@ func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) 
 // Returns the user if found, or an error if not found or query fails.
 func (r *PostgresUserRepository) FindByPhone(ctx context.Context, phone string) (*User, error) {
 	query := `
-		SELECT id, email, first_name, last_name, dob, username, password_hash,
-		       email_verified, phone, phone_verified, avatar_url, is_active,
+		SELECT id, email, 
+		       COALESCE(first_name, '') as first_name, 
+		       COALESCE(last_name, '') as last_name, 
+		       dob, 
+		       COALESCE(username, '') as username, 
+		       password_hash,
+		       email_verified, 
+		       COALESCE(phone, '') as phone, 
+		       phone_verified, 
+		       COALESCE(avatar_url, '') as avatar_url, 
+		       is_active,
 		       created_at, updated_at, last_login_at
 		FROM users WHERE phone = $1
 	`
@@ -133,8 +160,17 @@ func (r *PostgresUserRepository) FindByPhone(ctx context.Context, phone string) 
 // Returns the user if found, or an error if not found or query fails.
 func (r *PostgresUserRepository) FindByUsername(ctx context.Context, username string) (*User, error) {
 	query := `
-		SELECT id, email, first_name, last_name, dob, username, password_hash,
-		       email_verified, phone, phone_verified, avatar_url, is_active,
+		SELECT id, email, 
+		       COALESCE(first_name, '') as first_name, 
+		       COALESCE(last_name, '') as last_name, 
+		       dob, 
+		       COALESCE(username, '') as username, 
+		       password_hash,
+		       email_verified, 
+		       COALESCE(phone, '') as phone, 
+		       phone_verified, 
+		       COALESCE(avatar_url, '') as avatar_url, 
+		       is_active,
 		       created_at, updated_at, last_login_at
 		FROM users WHERE username = $1
 	`

@@ -81,3 +81,50 @@ type UserInfo struct {
 	Email    string `json:"email,omitempty"`
 	Phone    string `json:"phone,omitempty"`
 }
+
+// POST /v1/auth/send-email-verification
+type SendEmailVerificationRequest struct {
+	UserID string `json:"user_id" binding:"required"`
+}
+
+type SendEmailVerificationResponse struct {
+	Message   string `json:"message"`
+	ExpiresIn int    `json:"expires_in"` // seconds
+	// For testing only - remove in production
+	Code string `json:"code,omitempty"`
+}
+
+// POST /v1/auth/verify-email
+type VerifyEmailRequest struct {
+	UserID string `json:"user_id" binding:"required"`
+	Code   string `json:"code" binding:"required"`
+}
+
+type VerifyEmailResponse struct {
+	Message       string `json:"message"`
+	EmailVerified bool   `json:"email_verified"`
+}
+
+// POST /v1/auth/send-phone-verification
+type SendPhoneVerificationRequest struct {
+	UserID      string `json:"user_id" binding:"required"`
+	PhoneNumber string `json:"phone_number" binding:"required"`
+}
+
+type SendPhoneVerificationResponse struct {
+	Message   string `json:"message"`
+	ExpiresIn int    `json:"expires_in"` // seconds
+	// For testing only - remove in production
+	Code string `json:"code,omitempty"`
+}
+
+// POST /v1/auth/verify-phone
+type VerifyPhoneRequest struct {
+	UserID string `json:"user_id" binding:"required"`
+	Code   string `json:"code" binding:"required"`
+}
+
+type VerifyPhoneResponse struct {
+	Message       string `json:"message"`
+	PhoneVerified bool   `json:"phone_verified"`
+}

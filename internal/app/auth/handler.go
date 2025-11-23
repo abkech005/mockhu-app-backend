@@ -141,3 +141,93 @@ func (h *Handler) Resend(c *fiber.Ctx) error {
 		Message: "code_sent",
 	})
 }
+
+// SendEmailVerification generates and sends an email verification code.
+// The code is logged to console since email infrastructure isn't implemented yet.
+func (h *Handler) SendEmailVerification(c *fiber.Ctx) error {
+	var req SendEmailVerificationRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	verification, err := h.service.GenerateEmailVerificationCode(c.Context(), req.UserID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(SendEmailVerificationResponse{
+		Message:   "Verification code sent to your email",
+		ExpiresIn: 600,               // 10 minutes
+		Code:      verification.Code, // TODO: Remove in production (for testing only)
+	})
+}
+
+// VerifyEmail validates an email verification code and marks the user's email as verified.
+func (h *Handler) VerifyEmail(c *fiber.Ctx) error {
+	var req VerifyEmailRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	if err := h.service.VerifyEmailCode(c.Context(), req.UserID, req.Code); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(VerifyEmailResponse{
+		Message:       "Email verified successfully",
+		EmailVerified: true,
+	})
+}
+
+// SendPhoneVerification generates and sends a phone verification code.
+// The code is logged to console since SMS infrastructure isn't implemented yet.
+func (h *Handler) SendPhoneVerification(c *fiber.Ctx) error {
+	var req SendPhoneVerificationRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	verification, err := h.service.GeneratePhoneVerificationCode(c.Context(), req.UserID, req.PhoneNumber)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(SendPhoneVerificationResponse{
+		Message:   "Verification code sent to your phone",
+		ExpiresIn: 600,               // 10 minutes
+		Code:      verification.Code, // TODO: Remove in production (for testing only)
+	})
+}
+
+// VerifyPhone validates a phone verification code and marks the user's phone as verified.
+func (h *Handler) VerifyPhone(c *fiber.Ctx) error {
+	var req VerifyPhoneRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	if err := h.service.VerifyPhoneCode(c.Context(), req.UserID, req.Code); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(VerifyPhoneResponse{
+		Message:       "Phone verified successfully",
+		PhoneVerified: true,
+	})
+}
