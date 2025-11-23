@@ -4,20 +4,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"mockhu-app-backend/internal/app/auth"
+	"mockhu-app-backend/internal/app/interest"
 )
 
 // Service handles onboarding business logic
 type Service struct {
-	userRepo auth.UserRepository
+	userRepo     auth.UserRepository
+	interestRepo interest.InterestRepository
 }
 
 // NewService creates a new onboarding service
-func NewService(userRepo auth.UserRepository) *Service {
+func NewService(userRepo auth.UserRepository, interestRepo interest.InterestRepository) *Service {
 	return &Service{
-		userRepo: userRepo,
+		userRepo:     userRepo,
+		interestRepo: interestRepo,
 	}
 }
 
@@ -78,13 +82,39 @@ func (s *Service) CompleteOnboarding(ctx context.Context, req *CompleteOnboardin
 		return nil, fmt.Errorf("failed to update profile: %w", err)
 	}
 
-	// 9. Return success response
+	// 9. Save interests (if provided)
+	interestsCount := 0
+	if len(req.Interests) > 0 {
+		// Find interests by slugs
+		interests, err := s.interestRepo.FindBySlugs(ctx, req.Interests)
+		if err != nil {
+			log.Printf("⚠️ Failed to find interests: %v", err)
+			// Don't fail onboarding if interests fail
+		} else if len(interests) > 0 {
+			// Extract interest IDs
+			interestIDs := make([]string, len(interests))
+			for i, interest := range interests {
+				interestIDs[i] = interest.ID
+			}
+			
+			// Save user interests
+			if err := s.interestRepo.AddUserInterests(ctx, user.ID, interestIDs); err != nil {
+				log.Printf("⚠️ Failed to save user interests: %v", err)
+				// Don't fail onboarding if interests fail
+			} else {
+				interestsCount = len(interests)
+				log.Printf("✅ Saved %d interests for user %s", interestsCount, user.ID)
+			}
+		}
+	}
+
+	// 10. Return success response
 	return &CompleteOnboardingResponse{
 		Success:             true,
 		Message:             "onboarding completed successfully",
 		UserID:              user.ID,
 		ProfileCompleted:    true,
-		InterestsCount:      len(req.Interests), // For future use
+		InterestsCount:      interestsCount,
 		OnboardingCompleted: true,
 		OnboardedAt:         now,
 	}, nil
