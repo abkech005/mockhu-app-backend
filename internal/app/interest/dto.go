@@ -62,4 +62,3 @@ type CreateInterestResponse struct {
 	Message  string   `json:"message"`
 	Interest Interest `json:"interest"`
 }
-

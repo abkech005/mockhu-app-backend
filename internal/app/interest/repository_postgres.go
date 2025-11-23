@@ -26,14 +26,14 @@ func (r *PostgresInterestRepository) Create(ctx context.Context, interest *Inter
 		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at
 	`
-	
+
 	err := r.pool.QueryRow(ctx, query, interest.Name, interest.Slug, interest.Category, interest.Icon).
 		Scan(&interest.ID, &interest.CreatedAt)
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to create interest: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -44,13 +44,13 @@ func (r *PostgresInterestRepository) FindAll(ctx context.Context) ([]Interest, e
 		FROM interests
 		ORDER BY category, name
 	`
-	
+
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query interests: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var interests []Interest
 	for rows.Next() {
 		var interest Interest
@@ -60,11 +60,11 @@ func (r *PostgresInterestRepository) FindAll(ctx context.Context) ([]Interest, e
 		}
 		interests = append(interests, interest)
 	}
-	
+
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating interests: %w", err)
 	}
-	
+
 	return interests, nil
 }
 
@@ -75,19 +75,19 @@ func (r *PostgresInterestRepository) FindBySlug(ctx context.Context, slug string
 		FROM interests
 		WHERE slug = $1
 	`
-	
+
 	var interest Interest
 	err := r.pool.QueryRow(ctx, query, slug).Scan(
 		&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &interest.CreatedAt,
 	)
-	
+
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("interest with slug '%s' not found", slug)
 		}
 		return nil, fmt.Errorf("failed to find interest: %w", err)
 	}
-	
+
 	return &interest, nil
 }
 
@@ -99,13 +99,13 @@ func (r *PostgresInterestRepository) FindBySlugs(ctx context.Context, slugs []st
 		WHERE slug = ANY($1)
 		ORDER BY name
 	`
-	
+
 	rows, err := r.pool.Query(ctx, query, slugs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query interests by slugs: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var interests []Interest
 	for rows.Next() {
 		var interest Interest
@@ -115,7 +115,7 @@ func (r *PostgresInterestRepository) FindBySlugs(ctx context.Context, slugs []st
 		}
 		interests = append(interests, interest)
 	}
-	
+
 	return interests, nil
 }
 
@@ -127,13 +127,13 @@ func (r *PostgresInterestRepository) FindByCategory(ctx context.Context, categor
 		WHERE category = $1
 		ORDER BY name
 	`
-	
+
 	rows, err := r.pool.Query(ctx, query, category)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query interests by category: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var interests []Interest
 	for rows.Next() {
 		var interest Interest
@@ -143,7 +143,7 @@ func (r *PostgresInterestRepository) FindByCategory(ctx context.Context, categor
 		}
 		interests = append(interests, interest)
 	}
-	
+
 	return interests, nil
 }
 
@@ -151,7 +151,7 @@ func (r *PostgresInterestRepository) FindByCategory(ctx context.Context, categor
 func (r *PostgresInterestRepository) AddUserInterests(ctx context.Context, userID string, interestIDs []string) error {
 	// Use batch insert for better performance
 	batch := &pgx.Batch{}
-	
+
 	for _, interestID := range interestIDs {
 		query := `
 			INSERT INTO user_interests (user_id, interest_id)
@@ -160,17 +160,17 @@ func (r *PostgresInterestRepository) AddUserInterests(ctx context.Context, userI
 		`
 		batch.Queue(query, userID, interestID)
 	}
-	
+
 	results := r.pool.SendBatch(ctx, batch)
 	defer results.Close()
-	
+
 	for range interestIDs {
 		_, err := results.Exec()
 		if err != nil {
 			return fmt.Errorf("failed to add user interest: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -180,16 +180,16 @@ func (r *PostgresInterestRepository) RemoveUserInterest(ctx context.Context, use
 		DELETE FROM user_interests
 		WHERE user_id = $1 AND interest_id = $2
 	`
-	
+
 	result, err := r.pool.Exec(ctx, query, userID, interestID)
 	if err != nil {
 		return fmt.Errorf("failed to remove user interest: %w", err)
 	}
-	
+
 	if result.RowsAffected() == 0 {
 		return fmt.Errorf("user interest not found")
 	}
-	
+
 	return nil
 }
 
@@ -202,13 +202,13 @@ func (r *PostgresInterestRepository) GetUserInterests(ctx context.Context, userI
 		WHERE ui.user_id = $1
 		ORDER BY i.category, i.name
 	`
-	
+
 	rows, err := r.pool.Query(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query user interests: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var interests []Interest
 	for rows.Next() {
 		var interest Interest
@@ -218,7 +218,7 @@ func (r *PostgresInterestRepository) GetUserInterests(ctx context.Context, userI
 		}
 		interests = append(interests, interest)
 	}
-	
+
 	return interests, nil
 }
 
@@ -230,14 +230,14 @@ func (r *PostgresInterestRepository) ReplaceUserInterests(ctx context.Context, u
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
-	
+
 	// Delete all existing interests
 	deleteQuery := `DELETE FROM user_interests WHERE user_id = $1`
 	_, err = tx.Exec(ctx, deleteQuery, userID)
 	if err != nil {
 		return fmt.Errorf("failed to delete existing interests: %w", err)
 	}
-	
+
 	// Insert new interests
 	if len(interestIDs) > 0 {
 		for _, interestID := range interestIDs {
@@ -251,11 +251,11 @@ func (r *PostgresInterestRepository) ReplaceUserInterests(ctx context.Context, u
 			}
 		}
 	}
-	
+
 	if err = tx.Commit(ctx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -267,13 +267,13 @@ func (r *PostgresInterestRepository) UserHasInterest(ctx context.Context, userID
 			WHERE user_id = $1 AND interest_id = $2
 		)
 	`
-	
+
 	var exists bool
 	err := r.pool.QueryRow(ctx, query, userID, interestID).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("failed to check user interest: %w", err)
 	}
-	
+
 	return exists, nil
 }
 
@@ -285,13 +285,13 @@ func (r *PostgresInterestRepository) CountByCategory(ctx context.Context) (map[s
 		GROUP BY category
 		ORDER BY category
 	`
-	
+
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to count interests by category: %w", err)
 	}
 	defer rows.Close()
-	
+
 	counts := make(map[string]int)
 	for rows.Next() {
 		var category string
@@ -302,7 +302,7 @@ func (r *PostgresInterestRepository) CountByCategory(ctx context.Context) (map[s
 		}
 		counts[category] = count
 	}
-	
+
 	return counts, nil
 }
 
@@ -313,13 +313,12 @@ func (r *PostgresInterestRepository) CountUserInterests(ctx context.Context, use
 		FROM user_interests
 		WHERE user_id = $1
 	`
-	
+
 	var count int
 	err := r.pool.QueryRow(ctx, query, userID).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count user interests: %w", err)
 	}
-	
+
 	return count, nil
 }
-

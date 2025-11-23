@@ -21,14 +21,14 @@ type UserInterest struct {
 
 // Interest categories
 const (
-	CategoryTechnology  = "technology"
-	CategoryArts        = "arts"
-	CategorySports      = "sports"
+	CategoryTechnology    = "technology"
+	CategoryArts          = "arts"
+	CategorySports        = "sports"
 	CategoryEntertainment = "entertainment"
-	CategoryLifestyle   = "lifestyle"
-	CategoryBusiness    = "business"
-	CategoryEducation   = "education"
-	CategorySocial      = "social"
+	CategoryLifestyle     = "lifestyle"
+	CategoryBusiness      = "business"
+	CategoryEducation     = "education"
+	CategorySocial        = "social"
 )
 
 // UserInterestDetail includes interest details for a user
@@ -37,4 +37,3 @@ type UserInterestDetail struct {
 	Interest  Interest  `json:"interest"`
 	CreatedAt time.Time `json:"created_at"`
 }
-

@@ -96,7 +96,7 @@ func (s *Service) CompleteOnboarding(ctx context.Context, req *CompleteOnboardin
 			for i, interest := range interests {
 				interestIDs[i] = interest.ID
 			}
-			
+
 			// Save user interests
 			if err := s.interestRepo.AddUserInterests(ctx, user.ID, interestIDs); err != nil {
 				log.Printf("⚠️ Failed to save user interests: %v", err)
