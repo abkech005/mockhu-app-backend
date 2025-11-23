@@ -199,10 +199,19 @@ func (r *PostgresUserRepository) FindByUsername(ctx context.Context, username st
 func (r *PostgresUserRepository) Update(ctx context.Context, user *User) error {
 	query := `
 		UPDATE users SET
-			email = $2, first_name = $3, last_name = $4, dob = $5,
-			username = $6, password_hash = $7, email_verified = $8,
-			phone = $9, phone_verified = $10, avatar_url = $11,
-			is_active = $12, updated_at = $13, last_login_at = $14
+			email = $2, 
+			first_name = NULLIF($3, ''), 
+			last_name = NULLIF($4, ''), 
+			dob = $5,
+			username = NULLIF($6, ''), 
+			password_hash = $7, 
+			email_verified = $8,
+			phone = NULLIF($9, ''), 
+			phone_verified = $10, 
+			avatar_url = NULLIF($11, ''),
+			is_active = $12, 
+			updated_at = $13, 
+			last_login_at = $14
 		WHERE id = $1
 	`
 

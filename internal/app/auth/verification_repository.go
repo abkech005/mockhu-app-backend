@@ -18,8 +18,8 @@ type VerificationRepository interface {
 	// MarkAsUsed marks a verification code as used
 	MarkAsUsed(ctx context.Context, id string) error
 
-	// InvalidatePreviousCodes marks all previous codes for a contact as used (when generating new code)
-	InvalidatePreviousCodes(ctx context.Context, userID string, verificationType string) error
+	// DeactivatePreviousCodes deactivates all previous active codes for a user and type (when generating new code)
+	DeactivatePreviousCodes(ctx context.Context, userID string, verificationType string) error
 
 	// CleanupExpired deletes expired verification codes (for maintenance)
 	CleanupExpired(ctx context.Context) (int64, error)

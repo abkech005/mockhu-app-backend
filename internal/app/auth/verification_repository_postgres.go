@@ -50,9 +50,9 @@ func (r *PostgresVerificationRepository) Create(ctx context.Context, verificatio
 // Returns ErrNoRows if no matching code is found.
 func (r *PostgresVerificationRepository) FindByCodeAndType(ctx context.Context, code string, verificationType string) (*VerificationCode, error) {
 	query := `
-		SELECT id, user_id, code, type, contact, used_at, expires_at, created_at 
+		SELECT id, user_id, code, type, contact, is_active, used_at, expires_at, created_at 
 		FROM verification_codes 
-		WHERE code = $1 AND type = $2`
+		WHERE code = $1 AND type = $2 AND is_active = true`
 
 	var verification VerificationCode
 	err := r.pool.QueryRow(ctx, query, code, verificationType).Scan(
@@ -61,6 +61,7 @@ func (r *PostgresVerificationRepository) FindByCodeAndType(ctx context.Context, 
 		&verification.Code,
 		&verification.Type,
 		&verification.Contact,
+		&verification.IsActive,
 		&verification.UsedAt,
 		&verification.ExpiresAt,
 		&verification.CreatedAt,
@@ -108,10 +109,10 @@ func (r *PostgresVerificationRepository) FindActiveByContactAndType(ctx context.
 	return &verification, nil
 }
 
-// MarkAsUsed marks a verification code as used by setting the used_at timestamp.
+// MarkAsUsed marks a verification code as used by setting the used_at timestamp and deactivating it.
 // This prevents the code from being reused.
 func (r *PostgresVerificationRepository) MarkAsUsed(ctx context.Context, id string) error {
-	query := `UPDATE verification_codes SET used_at = $1 WHERE id = $2`
+	query := `UPDATE verification_codes SET used_at = $1, is_active = false WHERE id = $2`
 
 	result, err := r.pool.Exec(ctx, query, time.Now(), id)
 	if err != nil {
@@ -125,27 +126,31 @@ func (r *PostgresVerificationRepository) MarkAsUsed(ctx context.Context, id stri
 	return nil
 }
 
-// InvalidatePreviousCodes marks all previous unused verification codes for a user and type as used.
+// DeactivatePreviousCodes deactivates all previous active verification codes for a user and type.
 // This is typically called when generating a new verification code to invalidate old ones.
-func (r *PostgresVerificationRepository) InvalidatePreviousCodes(ctx context.Context, userID string, verificationType string) error {
+// More efficient than marking as used - just sets is_active to false.
+func (r *PostgresVerificationRepository) DeactivatePreviousCodes(ctx context.Context, userID string, verificationType string) error {
 	query := `
 		UPDATE verification_codes 
-		SET used_at = $1 
-		WHERE user_id = $2 AND type = $3 AND used_at IS NULL`
+		SET is_active = false 
+		WHERE user_id = $1 AND type = $2 AND is_active = true`
 
-	_, err := r.pool.Exec(ctx, query, time.Now(), userID, verificationType)
+	_, err := r.pool.Exec(ctx, query, userID, verificationType)
 	if err != nil {
-		return fmt.Errorf("failed to invalidate previous codes: %w", err)
+		return fmt.Errorf("failed to deactivate previous codes: %w", err)
 	}
 
 	return nil
 }
 
-// CleanupExpired deletes all expired verification codes from the database.
+// CleanupExpired deletes all expired or inactive verification codes from the database.
 // Returns the number of deleted rows.
 // This should be called periodically by a background job to keep the database clean.
 func (r *PostgresVerificationRepository) CleanupExpired(ctx context.Context) (int64, error) {
-	query := `DELETE FROM verification_codes WHERE expires_at < NOW()`
+	query := `
+		DELETE FROM verification_codes 
+		WHERE expires_at < NOW() 
+		   OR (is_active = false AND created_at < NOW() - INTERVAL '7 days')`
 
 	result, err := r.pool.Exec(ctx, query)
 	if err != nil {
@@ -154,4 +159,3 @@ func (r *PostgresVerificationRepository) CleanupExpired(ctx context.Context) (in
 
 	return result.RowsAffected(), nil
 }
-

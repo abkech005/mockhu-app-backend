@@ -29,34 +29,61 @@ func NewService(repo UserRepository, verificationRepo VerificationRepository) *S
 	}
 }
 
+// SignupResult contains the user and optional verification code
+type SignupResult struct {
+	User              *User
+	VerificationCode  *VerificationCode
+	NeedsVerification bool
+}
+
 // Signup creates a new user account with the provided information.
 // It performs the following operations:
-//   - Validates that the email doesn't already exist
+//   - Validates that the email/phone doesn't already exist
 //   - Hashes the password securely using bcrypt
 //   - Generates a unique UUID for the user
 //   - Creates the user record in the database
+//   - Automatically sends verification code based on signup method
 //
-// Returns the created user (without password) or an error if the operation fails.
-func (s *Service) Signup(ctx context.Context, email, password, firstName, lastName string) (*User, error) {
-	// Check if user already exists
-	existing, _ := s.repo.FindByEmail(ctx, email)
-	if existing != nil {
-		return nil, errors.New("email already registered")
+// Returns the created user, verification code (if applicable), or an error if the operation fails.
+func (s *Service) Signup(ctx context.Context, method, email, phone, password string) (*SignupResult, error) {
+	// Validate based on method
+	if method == "email" && email == "" {
+		return nil, errors.New("email is required for email signup")
+	}
+	if method == "mobile" && phone == "" {
+		return nil, errors.New("phone is required for mobile signup")
 	}
 
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, errors.New("failed to hash password")
+	// Check if user already exists
+	if email != "" {
+		existing, _ := s.repo.FindByEmail(ctx, email)
+		if existing != nil {
+			return nil, errors.New("email already registered")
+		}
+	}
+	if phone != "" {
+		existing, _ := s.repo.FindByPhone(ctx, phone)
+		if existing != nil {
+			return nil, errors.New("phone already registered")
+		}
+	}
+
+	// Hash password (if provided)
+	var hashedPassword string
+	if password != "" {
+		hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, errors.New("failed to hash password")
+		}
+		hashedPassword = string(hashed)
 	}
 
 	// Create user
 	user := &User{
 		ID:           uuid.New().String(),
 		Email:        email,
-		PasswordHash: string(hashedPassword),
-		FirstName:    firstName,
-		LastName:     lastName,
+		Phone:        phone,
+		PasswordHash: hashedPassword,
 		IsActive:     true,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -66,7 +93,41 @@ func (s *Service) Signup(ctx context.Context, email, password, firstName, lastNa
 		return nil, err
 	}
 
-	return user, nil
+	result := &SignupResult{
+		User:              user,
+		NeedsVerification: false,
+	}
+
+	// Auto-send verification based on signup method
+	switch method {
+	case "email":
+		verificationCode, err := s.GenerateEmailVerificationCode(ctx, user.ID)
+		if err != nil {
+			log.Printf("⚠️ Failed to send email verification: %v", err)
+			// Don't fail signup if verification fails
+		} else {
+			result.VerificationCode = verificationCode
+			result.NeedsVerification = true
+		}
+
+	case "mobile":
+		verificationCode, err := s.GeneratePhoneVerificationCode(ctx, user.ID, phone)
+		if err != nil {
+			log.Printf("⚠️ Failed to send phone verification: %v", err)
+			// Don't fail signup if verification fails
+		} else {
+			result.VerificationCode = verificationCode
+			result.NeedsVerification = true
+		}
+
+	case "google", "facebook":
+		// Social signups are pre-verified
+		user.EmailVerified = true
+		user.UpdatedAt = time.Now()
+		_ = s.repo.Update(ctx, user)
+	}
+
+	return result, nil
 }
 
 // Login authenticates a user with their email and password.
@@ -177,7 +238,7 @@ func (s *Service) ChangePassword(ctx context.Context, userID, oldPassword, newPa
 }
 
 // GenerateEmailVerificationCode creates a new 6-digit verification code for email verification.
-// It invalidates any previous unused codes and logs the code (since email infrastructure isn't implemented yet).
+// It deactivates any previous active codes and logs the code (since email infrastructure isn't implemented yet).
 func (s *Service) GenerateEmailVerificationCode(ctx context.Context, userID string) (*VerificationCode, error) {
 	// Get user to retrieve email
 	user, err := s.repo.FindByID(ctx, userID)
@@ -185,8 +246,8 @@ func (s *Service) GenerateEmailVerificationCode(ctx context.Context, userID stri
 		return nil, errors.New("user not found")
 	}
 
-	// Invalidate previous codes for this user
-	_ = s.verificationRepo.InvalidatePreviousCodes(ctx, userID, VerificationTypeEmail)
+	// Deactivate previous codes for this user (optimal: just sets is_active=false)
+	_ = s.verificationRepo.DeactivatePreviousCodes(ctx, userID, VerificationTypeEmail)
 
 	// Generate 6-digit code
 	code := generateRandomCode()
@@ -197,6 +258,7 @@ func (s *Service) GenerateEmailVerificationCode(ctx context.Context, userID stri
 		Code:      code,
 		Type:      VerificationTypeEmail,
 		Contact:   user.Email,
+		IsActive:  true, // New codes are active by default
 		ExpiresAt: time.Now().Add(10 * time.Minute),
 		CreatedAt: time.Now(),
 	}
@@ -212,9 +274,9 @@ func (s *Service) GenerateEmailVerificationCode(ctx context.Context, userID stri
 }
 
 // VerifyEmailCode validates an email verification code and marks the user's email as verified.
-// It checks that the code exists, hasn't been used, and hasn't expired.
+// It checks that the code is active, exists, hasn't been used, and hasn't expired.
 func (s *Service) VerifyEmailCode(ctx context.Context, userID, code string) error {
-	// Find the verification code
+	// Find the verification code (only returns active codes)
 	verification, err := s.verificationRepo.FindByCodeAndType(ctx, code, VerificationTypeEmail)
 	if err != nil {
 		return errors.New("invalid or expired code")
@@ -223,6 +285,11 @@ func (s *Service) VerifyEmailCode(ctx context.Context, userID, code string) erro
 	// Verify it belongs to the user
 	if verification.UserID != userID {
 		return errors.New("invalid code")
+	}
+
+	// Check if active (should be true from query, but double-check)
+	if !verification.IsActive {
+		return errors.New("code is no longer active")
 	}
 
 	// Check if already used
@@ -235,7 +302,7 @@ func (s *Service) VerifyEmailCode(ctx context.Context, userID, code string) erro
 		return errors.New("code has expired")
 	}
 
-	// Mark code as used
+	// Mark code as used (also sets is_active=false)
 	if err := s.verificationRepo.MarkAsUsed(ctx, verification.ID); err != nil {
 		return fmt.Errorf("failed to mark code as used: %w", err)
 	}
@@ -258,7 +325,7 @@ func (s *Service) VerifyEmailCode(ctx context.Context, userID, code string) erro
 }
 
 // GeneratePhoneVerificationCode creates a new 6-digit verification code for phone verification.
-// It invalidates any previous unused codes and logs the code (since SMS infrastructure isn't implemented yet).
+// It deactivates any previous active codes and logs the code (since SMS infrastructure isn't implemented yet).
 func (s *Service) GeneratePhoneVerificationCode(ctx context.Context, userID, phoneNumber string) (*VerificationCode, error) {
 	// Verify user exists
 	user, err := s.repo.FindByID(ctx, userID)
@@ -275,8 +342,8 @@ func (s *Service) GeneratePhoneVerificationCode(ctx context.Context, userID, pho
 		}
 	}
 
-	// Invalidate previous codes for this user
-	_ = s.verificationRepo.InvalidatePreviousCodes(ctx, userID, VerificationTypePhone)
+	// Deactivate previous codes for this user (optimal: just sets is_active=false)
+	_ = s.verificationRepo.DeactivatePreviousCodes(ctx, userID, VerificationTypePhone)
 
 	// Generate 6-digit code
 	code := generateRandomCode()
@@ -287,6 +354,7 @@ func (s *Service) GeneratePhoneVerificationCode(ctx context.Context, userID, pho
 		Code:      code,
 		Type:      VerificationTypePhone,
 		Contact:   user.Phone,
+		IsActive:  true, // New codes are active by default
 		ExpiresAt: time.Now().Add(10 * time.Minute),
 		CreatedAt: time.Now(),
 	}
@@ -302,9 +370,9 @@ func (s *Service) GeneratePhoneVerificationCode(ctx context.Context, userID, pho
 }
 
 // VerifyPhoneCode validates a phone verification code and marks the user's phone as verified.
-// It checks that the code exists, hasn't been used, and hasn't expired.
+// It checks that the code is active, exists, hasn't been used, and hasn't expired.
 func (s *Service) VerifyPhoneCode(ctx context.Context, userID, code string) error {
-	// Find the verification code
+	// Find the verification code (only returns active codes)
 	verification, err := s.verificationRepo.FindByCodeAndType(ctx, code, VerificationTypePhone)
 	if err != nil {
 		return errors.New("invalid or expired code")
@@ -313,6 +381,11 @@ func (s *Service) VerifyPhoneCode(ctx context.Context, userID, code string) erro
 	// Verify it belongs to the user
 	if verification.UserID != userID {
 		return errors.New("invalid code")
+	}
+
+	// Check if active (should be true from query, but double-check)
+	if !verification.IsActive {
+		return errors.New("code is no longer active")
 	}
 
 	// Check if already used
@@ -325,7 +398,7 @@ func (s *Service) VerifyPhoneCode(ctx context.Context, userID, code string) erro
 		return errors.New("code has expired")
 	}
 
-	// Mark code as used
+	// Mark code as used (also sets is_active=false)
 	if err := s.verificationRepo.MarkAsUsed(ctx, verification.ID); err != nil {
 		return fmt.Errorf("failed to mark code as used: %w", err)
 	}

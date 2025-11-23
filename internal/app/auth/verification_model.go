@@ -9,7 +9,8 @@ type VerificationCode struct {
 	Code      string     `json:"code"`
 	Type      string     `json:"type"`
 	Contact   string     `json:"contact"`
-	UsedAt    *time.Time `json:"used_at,omitempty"`
+	IsActive  bool       `json:"is_active"`         // Active status - false means invalidated
+	UsedAt    *time.Time `json:"used_at,omitempty"` // When code was used
 	ExpiresAt time.Time  `json:"expires_at"`
 	CreatedAt time.Time  `json:"created_at"`
 }

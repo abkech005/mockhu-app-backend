@@ -16,8 +16,7 @@ func NewHandler(service *Service) *Handler {
 }
 
 // Signup handles new user registration.
-// It validates the request, creates a new user, and returns the user ID.
-// TODO: Add email/phone verification logic.
+// It validates the request, creates a new user, and automatically sends verification code.
 func (h *Handler) Signup(c *fiber.Ctx) error {
 	var req SignupRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -26,20 +25,39 @@ func (h *Handler) Signup(c *fiber.Ctx) error {
 		})
 	}
 
-	// Create user via service
-	// Note: FirstName and LastName are empty for now as they're not in the signup request
-	user, err := h.service.Signup(c.Context(), req.Email, req.Password, "", "")
+	// Validate method
+	if req.Method == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "signup method is required",
+		})
+	}
+
+	// Create user and auto-send verification
+	result, err := h.service.Signup(c.Context(), req.Method, req.Email, req.Phone, req.Password)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(SignupResponse{
-		UserID:              user.ID,
-		VerificationNeeded:  true,
+	response := SignupResponse{
+		UserID:              result.User.ID,
+		VerificationNeeded:  result.NeedsVerification,
 		VerificationChannel: req.Method,
-	})
+	}
+
+	// Include verification code in response for testing (remove in production)
+	if result.VerificationCode != nil {
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+			"user_id":              response.UserID,
+			"verification_needed":  response.VerificationNeeded,
+			"verification_channel": response.VerificationChannel,
+			"verification_code":    result.VerificationCode.Code, // TODO: Remove in production
+			"verification_expires": 600,                          // 10 minutes
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(response)
 }
 
 // Verify handles email/phone verification.
