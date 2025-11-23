@@ -1,13 +1,16 @@
 package onboarding
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
-func RegisterRoutes(app *fiber.App) {
-	handler := NewHandler()
+// RegisterRoutes sets up all onboarding-related routes
+func RegisterRoutes(app *fiber.App, handler *Handler) {
+	onboarding := app.Group("/v1/onboarding")
 
-	onboard := app.Group("/v1/onboard")
+	// Single endpoint for complete onboarding (cost-optimized)
+	onboarding.Post("/complete", handler.CompleteOnboarding)
 
-	onboard.Post("/basic", handler.Basic)
-	onboard.Post("/profile", handler.Profile)
-	onboard.Post("/interests", handler.Interests)
+	// Get onboarding status
+	onboarding.Get("/status/:user_id", handler.GetOnboardingStatus)
 }

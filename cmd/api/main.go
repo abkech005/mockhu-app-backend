@@ -62,9 +62,13 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 	authService := auth.NewService(authRepo, verificationRepo)
 	authHandler := auth.NewHandler(authService)
 
+	// Onboarding dependencies (reuse authRepo)
+	onboardingService := onboarding.NewService(authRepo)
+	onboardingHandler := onboarding.NewHandler(onboardingService)
+
 	// Register domain routes
 	auth.RegisterRoutes(app, authHandler)
-	onboarding.RegisterRoutes(app)
+	onboarding.RegisterRoutes(app, onboardingHandler)
 	upload.RegisterRoutes(app)
 
 	return app

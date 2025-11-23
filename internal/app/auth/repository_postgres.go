@@ -29,17 +29,19 @@ func (r *PostgresUserRepository) Create(ctx context.Context, user *User) error {
 	query := `INSERT INTO users (
 		id, email, email_verified, phone, phone_verified, username, 
 		first_name, last_name, dob, password_hash, avatar_url, 
-		is_active, last_login_at, created_at, updated_at
+		is_active, onboarding_completed, onboarded_at,
+		last_login_at, created_at, updated_at
 	) VALUES (
 		$1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), 
 		NULLIF($7, ''), NULLIF($8, ''), $9, $10, NULLIF($11, ''), 
-		$12, $13, $14, $15
+		$12, $13, $14, $15, $16, $17
 	)`
 
 	_, err := r.pool.Exec(ctx, query,
 		user.ID, user.Email, user.EmailVerified, user.Phone, user.PhoneVerified,
 		user.Username, user.FirstName, user.LastName, user.DOB, user.PasswordHash,
-		user.AvatarURL, user.IsActive, user.LastLoginAt, user.CreatedAt, user.UpdatedAt,
+		user.AvatarURL, user.IsActive, user.OnboardingCompleted, user.OnboardedAt,
+		user.LastLoginAt, user.CreatedAt, user.UpdatedAt,
 	)
 
 	return err
@@ -60,6 +62,7 @@ func (r *PostgresUserRepository) FindByID(ctx context.Context, id string) (*User
 		       phone_verified, 
 		       COALESCE(avatar_url, '') as avatar_url, 
 		       is_active,
+		       onboarding_completed, onboarded_at,
 		       created_at, updated_at, last_login_at
 		FROM users WHERE id = $1
 	`
@@ -68,8 +71,9 @@ func (r *PostgresUserRepository) FindByID(ctx context.Context, id string) (*User
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.DOB,
 		&user.Username, &user.PasswordHash, &user.EmailVerified, &user.Phone,
-		&user.PhoneVerified, &user.AvatarURL, &user.IsActive, &user.CreatedAt,
-		&user.UpdatedAt, &user.LastLoginAt,
+		&user.PhoneVerified, &user.AvatarURL, &user.IsActive,
+		&user.OnboardingCompleted, &user.OnboardedAt,
+		&user.CreatedAt, &user.UpdatedAt, &user.LastLoginAt,
 	)
 
 	if err != nil {
@@ -97,6 +101,7 @@ func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) 
 		       phone_verified, 
 		       COALESCE(avatar_url, '') as avatar_url, 
 		       is_active,
+		       onboarding_completed, onboarded_at,
 		       created_at, updated_at, last_login_at
 		FROM users WHERE email = $1
 	`
@@ -105,8 +110,9 @@ func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) 
 	err := r.pool.QueryRow(ctx, query, email).Scan(
 		&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.DOB,
 		&user.Username, &user.PasswordHash, &user.EmailVerified, &user.Phone,
-		&user.PhoneVerified, &user.AvatarURL, &user.IsActive, &user.CreatedAt,
-		&user.UpdatedAt, &user.LastLoginAt,
+		&user.PhoneVerified, &user.AvatarURL, &user.IsActive,
+		&user.OnboardingCompleted, &user.OnboardedAt,
+		&user.CreatedAt, &user.UpdatedAt, &user.LastLoginAt,
 	)
 
 	if err != nil {
@@ -134,6 +140,7 @@ func (r *PostgresUserRepository) FindByPhone(ctx context.Context, phone string) 
 		       phone_verified, 
 		       COALESCE(avatar_url, '') as avatar_url, 
 		       is_active,
+		       onboarding_completed, onboarded_at,
 		       created_at, updated_at, last_login_at
 		FROM users WHERE phone = $1
 	`
@@ -142,8 +149,9 @@ func (r *PostgresUserRepository) FindByPhone(ctx context.Context, phone string) 
 	err := r.pool.QueryRow(ctx, query, phone).Scan(
 		&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.DOB,
 		&user.Username, &user.PasswordHash, &user.EmailVerified, &user.Phone,
-		&user.PhoneVerified, &user.AvatarURL, &user.IsActive, &user.CreatedAt,
-		&user.UpdatedAt, &user.LastLoginAt,
+		&user.PhoneVerified, &user.AvatarURL, &user.IsActive,
+		&user.OnboardingCompleted, &user.OnboardedAt,
+		&user.CreatedAt, &user.UpdatedAt, &user.LastLoginAt,
 	)
 
 	if err != nil {
@@ -171,6 +179,7 @@ func (r *PostgresUserRepository) FindByUsername(ctx context.Context, username st
 		       phone_verified, 
 		       COALESCE(avatar_url, '') as avatar_url, 
 		       is_active,
+		       onboarding_completed, onboarded_at,
 		       created_at, updated_at, last_login_at
 		FROM users WHERE username = $1
 	`
@@ -179,8 +188,9 @@ func (r *PostgresUserRepository) FindByUsername(ctx context.Context, username st
 	err := r.pool.QueryRow(ctx, query, username).Scan(
 		&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.DOB,
 		&user.Username, &user.PasswordHash, &user.EmailVerified, &user.Phone,
-		&user.PhoneVerified, &user.AvatarURL, &user.IsActive, &user.CreatedAt,
-		&user.UpdatedAt, &user.LastLoginAt,
+		&user.PhoneVerified, &user.AvatarURL, &user.IsActive,
+		&user.OnboardingCompleted, &user.OnboardedAt,
+		&user.CreatedAt, &user.UpdatedAt, &user.LastLoginAt,
 	)
 
 	if err != nil {
@@ -210,16 +220,19 @@ func (r *PostgresUserRepository) Update(ctx context.Context, user *User) error {
 			phone_verified = $10, 
 			avatar_url = NULLIF($11, ''),
 			is_active = $12, 
-			updated_at = $13, 
-			last_login_at = $14
+			onboarding_completed = $13, 
+			onboarded_at = $14,
+			updated_at = $15, 
+			last_login_at = $16
 		WHERE id = $1
 	`
 
 	result, err := r.pool.Exec(ctx, query,
 		user.ID, user.Email, user.FirstName, user.LastName, user.DOB,
 		user.Username, user.PasswordHash, user.EmailVerified, user.Phone,
-		user.PhoneVerified, user.AvatarURL, user.IsActive, user.UpdatedAt,
-		user.LastLoginAt,
+		user.PhoneVerified, user.AvatarURL, user.IsActive,
+		user.OnboardingCompleted, user.OnboardedAt,
+		user.UpdatedAt, user.LastLoginAt,
 	)
 
 	if err != nil {

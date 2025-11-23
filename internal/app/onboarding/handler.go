@@ -4,46 +4,52 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// Handler handles HTTP requests for onboarding endpoints
 type Handler struct {
-	// Add dependencies here later
+	service *Service
 }
 
-func NewHandler() *Handler {
-	return &Handler{}
+// NewHandler creates a new onboarding handler
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service}
 }
 
-func (h *Handler) Basic(c *fiber.Ctx) error {
-	var req BasicRequest
+// CompleteOnboarding handles the single onboarding request
+// POST /v1/onboarding/complete
+func (h *Handler) CompleteOnboarding(c *fiber.Ctx) error {
+	var req CompleteOnboardingRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(BasicResponse{
-		TempID:  "temp-uuid-67890",
-		Message: "basic_saved",
-	})
-}
-
-func (h *Handler) Profile(c *fiber.Ctx) error {
-	var req ProfileRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	response, err := h.service.CompleteOnboarding(c.Context(), &req)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
-	return c.JSON(ProfileResponse{
-		TempID:            req.TempID,
-		UsernameAvailable: true,
-		AvatarURL:         "https://cdn.example.com/avatars/dummy.jpg",
-	})
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
-func (h *Handler) Interests(c *fiber.Ctx) error {
-	var req InterestsRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+// GetOnboardingStatus returns the current onboarding status
+// GET /v1/onboarding/status/:user_id
+func (h *Handler) GetOnboardingStatus(c *fiber.Ctx) error {
+	userID := c.Params("user_id")
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "user_id is required",
+		})
 	}
 
-	return c.JSON(InterestsResponse{
-		Message: "interests_saved",
-	})
+	response, err := h.service.GetOnboardingStatus(c.Context(), userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(response)
 }
