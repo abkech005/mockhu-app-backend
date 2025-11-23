@@ -2,7 +2,11 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
+	"fmt"
+	"log"
+	"math/big"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,13 +16,17 @@ import (
 // Service handles business logic for authentication operations.
 // It coordinates between the HTTP layer and the data layer (repository).
 type Service struct {
-	repo UserRepository
+	repo             UserRepository
+	verificationRepo VerificationRepository
 }
 
 // NewService creates a new authentication service instance.
-// It requires a UserRepository implementation to interact with the database.
-func NewService(repo UserRepository) *Service {
-	return &Service{repo: repo}
+// It requires a UserRepository and VerificationRepository to interact with the database.
+func NewService(repo UserRepository, verificationRepo VerificationRepository) *Service {
+	return &Service{
+		repo:             repo,
+		verificationRepo: verificationRepo,
+	}
 }
 
 // Signup creates a new user account with the provided information.
@@ -166,4 +174,186 @@ func (s *Service) ChangePassword(ctx context.Context, userID, oldPassword, newPa
 	user.UpdatedAt = time.Now()
 
 	return s.repo.Update(ctx, user)
+}
+
+// GenerateEmailVerificationCode creates a new 6-digit verification code for email verification.
+// It invalidates any previous unused codes and logs the code (since email infrastructure isn't implemented yet).
+func (s *Service) GenerateEmailVerificationCode(ctx context.Context, userID string) (*VerificationCode, error) {
+	// Get user to retrieve email
+	user, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	// Invalidate previous codes for this user
+	_ = s.verificationRepo.InvalidatePreviousCodes(ctx, userID, VerificationTypeEmail)
+
+	// Generate 6-digit code
+	code := generateRandomCode()
+
+	verification := &VerificationCode{
+		ID:        uuid.New().String(),
+		UserID:    userID,
+		Code:      code,
+		Type:      VerificationTypeEmail,
+		Contact:   user.Email,
+		ExpiresAt: time.Now().Add(10 * time.Minute),
+		CreatedAt: time.Now(),
+	}
+
+	if err := s.verificationRepo.Create(ctx, verification); err != nil {
+		return nil, fmt.Errorf("failed to create verification code: %w", err)
+	}
+
+	// TODO: Send email when notification infrastructure is ready
+	log.Printf("📧 [MOCK EMAIL] To: %s | Code: %s | Expires in 10 minutes", user.Email, code)
+
+	return verification, nil
+}
+
+// VerifyEmailCode validates an email verification code and marks the user's email as verified.
+// It checks that the code exists, hasn't been used, and hasn't expired.
+func (s *Service) VerifyEmailCode(ctx context.Context, userID, code string) error {
+	// Find the verification code
+	verification, err := s.verificationRepo.FindByCodeAndType(ctx, code, VerificationTypeEmail)
+	if err != nil {
+		return errors.New("invalid or expired code")
+	}
+
+	// Verify it belongs to the user
+	if verification.UserID != userID {
+		return errors.New("invalid code")
+	}
+
+	// Check if already used
+	if verification.UsedAt != nil {
+		return errors.New("code already used")
+	}
+
+	// Check if expired
+	if time.Now().After(verification.ExpiresAt) {
+		return errors.New("code has expired")
+	}
+
+	// Mark code as used
+	if err := s.verificationRepo.MarkAsUsed(ctx, verification.ID); err != nil {
+		return fmt.Errorf("failed to mark code as used: %w", err)
+	}
+
+	// Update user's email_verified status
+	user, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	user.EmailVerified = true
+	user.UpdatedAt = time.Now()
+
+	if err := s.repo.Update(ctx, user); err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+
+	log.Printf("✅ Email verified for user: %s", userID)
+	return nil
+}
+
+// GeneratePhoneVerificationCode creates a new 6-digit verification code for phone verification.
+// It invalidates any previous unused codes and logs the code (since SMS infrastructure isn't implemented yet).
+func (s *Service) GeneratePhoneVerificationCode(ctx context.Context, userID, phoneNumber string) (*VerificationCode, error) {
+	// Verify user exists
+	user, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	// Update user's phone number if provided
+	if phoneNumber != "" && user.Phone != phoneNumber {
+		user.Phone = phoneNumber
+		user.UpdatedAt = time.Now()
+		if err := s.repo.Update(ctx, user); err != nil {
+			return nil, fmt.Errorf("failed to update phone number: %w", err)
+		}
+	}
+
+	// Invalidate previous codes for this user
+	_ = s.verificationRepo.InvalidatePreviousCodes(ctx, userID, VerificationTypePhone)
+
+	// Generate 6-digit code
+	code := generateRandomCode()
+
+	verification := &VerificationCode{
+		ID:        uuid.New().String(),
+		UserID:    userID,
+		Code:      code,
+		Type:      VerificationTypePhone,
+		Contact:   user.Phone,
+		ExpiresAt: time.Now().Add(10 * time.Minute),
+		CreatedAt: time.Now(),
+	}
+
+	if err := s.verificationRepo.Create(ctx, verification); err != nil {
+		return nil, fmt.Errorf("failed to create verification code: %w", err)
+	}
+
+	// TODO: Send SMS when notification infrastructure is ready
+	log.Printf("📱 [MOCK SMS] To: %s | Code: %s | Expires in 10 minutes", user.Phone, code)
+
+	return verification, nil
+}
+
+// VerifyPhoneCode validates a phone verification code and marks the user's phone as verified.
+// It checks that the code exists, hasn't been used, and hasn't expired.
+func (s *Service) VerifyPhoneCode(ctx context.Context, userID, code string) error {
+	// Find the verification code
+	verification, err := s.verificationRepo.FindByCodeAndType(ctx, code, VerificationTypePhone)
+	if err != nil {
+		return errors.New("invalid or expired code")
+	}
+
+	// Verify it belongs to the user
+	if verification.UserID != userID {
+		return errors.New("invalid code")
+	}
+
+	// Check if already used
+	if verification.UsedAt != nil {
+		return errors.New("code already used")
+	}
+
+	// Check if expired
+	if time.Now().After(verification.ExpiresAt) {
+		return errors.New("code has expired")
+	}
+
+	// Mark code as used
+	if err := s.verificationRepo.MarkAsUsed(ctx, verification.ID); err != nil {
+		return fmt.Errorf("failed to mark code as used: %w", err)
+	}
+
+	// Update user's phone_verified status
+	user, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	user.PhoneVerified = true
+	user.UpdatedAt = time.Now()
+
+	if err := s.repo.Update(ctx, user); err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+
+	log.Printf("✅ Phone verified for user: %s", userID)
+	return nil
+}
+
+// generateRandomCode generates a secure random 6-digit verification code.
+func generateRandomCode() string {
+	max := big.NewInt(1000000)
+	n, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		// Fallback to timestamp-based code if crypto/rand fails
+		return fmt.Sprintf("%06d", time.Now().UnixNano()%1000000)
+	}
+	return fmt.Sprintf("%06d", n.Int64())
 }

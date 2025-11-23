@@ -58,7 +58,8 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 
 	// Build dependency layers: Repository -> Service -> Handler
 	authRepo := auth.NewPostgresUserRepository(pg.Pool)
-	authService := auth.NewService(authRepo)
+	verificationRepo := auth.NewPostgresVerificationRepository(pg.Pool)
+	authService := auth.NewService(authRepo, verificationRepo)
 	authHandler := auth.NewHandler(authService)
 
 	// Register domain routes
