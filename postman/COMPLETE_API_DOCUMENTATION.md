@@ -10,6 +10,7 @@ Complete API documentation for all Mockhu Backend endpoints.
 4. [Upload](#upload)
 5. [Follow](#follow)
 6. [Posts](#posts)
+7. [Comments](#comments)
 
 ---
 
@@ -443,6 +444,150 @@ Delete a post (soft delete).
 
 ---
 
+## 💬 Comments
+
+### POST /v1/posts/:postId/comments
+Create a comment on a post.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "content": "This is a great post! Thanks for sharing.",
+  "parent_comment_id": "uuid (optional, for replies)",
+  "is_anonymous": false
+}
+```
+
+**Constraints:**
+- `content`: 1-2000 characters
+- `parent_comment_id`: Optional, for creating replies
+- `is_anonymous`: Boolean
+
+**Response (201):**
+```json
+{
+  "id": "uuid",
+  "post_id": "uuid",
+  "author": {
+    "id": "uuid",
+    "username": "johndoe",
+    "first_name": "John",
+    "avatar_url": "https://example.com/avatar.jpg"
+  },
+  "content": "This is a great post! Thanks for sharing.",
+  "parent_comment_id": null,
+  "replies": [],
+  "reply_count": 0,
+  "created_at": "2025-11-26T10:00:00Z",
+  "updated_at": "2025-11-26T10:00:00Z"
+}
+```
+
+### GET /v1/comments/:commentId
+Get a single comment by ID (public endpoint).
+
+**Response (200):**
+```json
+{
+  "id": "uuid",
+  "post_id": "uuid",
+  "author": {...},
+  "content": "...",
+  "parent_comment_id": null,
+  "replies": [
+    {
+      "id": "uuid",
+      "content": "Reply content",
+      "author": {...}
+    }
+  ],
+  "reply_count": 2,
+  "created_at": "...",
+  "updated_at": "..."
+}
+```
+
+**Note:** Includes up to 5 replies. Public endpoint (no auth required).
+
+### GET /v1/posts/:postId/comments
+Get all comments for a post.
+
+**Query Parameters:**
+- `page` (default: 1)
+- `limit` (default: 20, max: 50)
+
+**Headers (optional):**
+- `Authorization: Bearer <token>` - For author info
+
+**Response (200):**
+```json
+{
+  "comments": [
+    {
+      "id": "uuid",
+      "content": "...",
+      "author": {...},
+      "replies": [...],
+      "reply_count": 2
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "total_pages": 1,
+    "total_items": 10,
+    "limit": 20
+  }
+}
+```
+
+**Note:** Public endpoint. Returns top-level comments with replies nested. **Single-level only** - replies cannot have replies.
+
+### PUT /v1/comments/:commentId
+Update a comment.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+- `Content-Type: application/json`
+
+**Request Body:**
+```json
+{
+  "content": "Updated comment content"
+}
+```
+
+**Response (200):**
+```json
+{
+  "id": "uuid",
+  "content": "Updated comment content",
+  "updated_at": "2025-11-26T10:05:00Z"
+}
+```
+
+**Note:** Only comment owner can update. Content must be 1-2000 characters.
+
+### DELETE /v1/comments/:commentId
+Delete a comment (soft delete).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Response (200):**
+```json
+{
+  "message": "comment deleted successfully"
+}
+```
+
+**Note:** Only comment owner can delete. Comment is soft-deleted (is_active = false).
+
+---
+
 ## 🔑 Authentication
 
 Most endpoints require authentication. Include the JWT token in the Authorization header:
@@ -486,6 +631,8 @@ Common HTTP status codes:
    - Signup → Verify → Login (auto-sets `access_token`)
    - Complete Onboarding
    - Create Post (auto-sets `post_id`)
+   - Create Comment (auto-sets `comment_id`)
+   - Create Reply (uses `comment_id` as `parent_comment_id`)
    - Follow Users
    - Get Feed
 
@@ -499,4 +646,8 @@ Common HTTP status codes:
 - Images: Max 10 per post
 - Reactions: Currently only "fire" type supported
 - Soft delete: Deleted posts are marked `is_active = false`
+- Comment content: 1-2000 characters
+- **Replies: Single-level only** (comment → reply, replies cannot have replies)
+- Comment soft delete: Deleted comments are marked `is_active = false`
+- **Validation**: Attempting to reply to a reply returns `400 Bad Request`
 

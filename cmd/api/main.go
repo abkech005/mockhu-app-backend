@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"mockhu-app-backend/internal/app/auth"
+	"mockhu-app-backend/internal/app/comment"
 	"mockhu-app-backend/internal/app/follow"
 	"mockhu-app-backend/internal/app/interest"
 	"mockhu-app-backend/internal/app/onboarding"
@@ -84,7 +85,14 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 	postService := post.NewService(postRepo, authRepo)
 	postHandler := post.NewHandler(postService)
 
+	// Comment dependencies
+	commentRepo := comment.NewPostgresCommentRepository(pg.Pool)
+	commentService := comment.NewService(commentRepo, authRepo, postRepo)
+	commentHandler := comment.NewHandler(commentService)
+
 	// Register domain routes
+	// Register comment routes BEFORE post routes to avoid route conflicts
+	comment.RegisterRoutes(app, commentHandler)
 	auth.RegisterRoutes(app, authHandler)
 	interest.RegisterRoutes(app, interestHandler)
 	onboarding.RegisterRoutes(app, onboardingHandler)

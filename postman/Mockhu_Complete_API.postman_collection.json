@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "mockhu-complete-api",
 		"name": "Mockhu - Complete API Collection",
-		"description": "Complete API collection for Mockhu Backend - All endpoints including Auth, Interests, Onboarding, Upload, Follow, and Posts",
+		"description": "Complete API collection for Mockhu Backend - All endpoints including Auth, Interests, Onboarding, Upload, Follow, Posts, and Comments",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "mockhu-api"
 	},
@@ -676,6 +676,203 @@
 							]
 						},
 						"description": "Delete a post (soft delete). Only post owner can delete."
+					}
+				}
+			]
+		},
+		{
+			"name": "Comments",
+			"item": [
+				{
+					"name": "Create Comment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.id) {",
+									"        pm.environment.set(\"comment_id\", jsonData.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"This is a great post! Thanks for sharing.\",\n  \"is_anonymous\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/posts/:postId/comments",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "posts", ":postId", "comments"],
+							"variable": [
+								{
+									"key": "postId",
+									"value": "{{post_id}}"
+								}
+							]
+						},
+						"description": "Create a comment on a post. Content must be 1-2000 characters. Optional parent_comment_id for replies."
+					}
+				},
+				{
+					"name": "Create Reply",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"I totally agree with this comment!\",\n  \"parent_comment_id\": \"{{comment_id}}\",\n  \"is_anonymous\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/posts/:postId/comments",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "posts", ":postId", "comments"],
+							"variable": [
+								{
+									"key": "postId",
+									"value": "{{post_id}}"
+								}
+							]
+						},
+						"description": "Create a reply to a comment by providing parent_comment_id."
+					}
+				},
+				{
+					"name": "Get Comment",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/comments/:commentId",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "comments", ":commentId"],
+							"variable": [
+								{
+									"key": "commentId",
+									"value": "{{comment_id}}"
+								}
+							]
+						},
+						"description": "Get a single comment by ID. Public endpoint. Includes replies (up to 5)."
+					}
+				},
+				{
+					"name": "Get Post Comments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/posts/:postId/comments?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "posts", ":postId", "comments"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							],
+							"variable": [
+								{
+									"key": "postId",
+									"value": "{{post_id}}"
+								}
+							]
+						},
+						"description": "Get all comments for a post. Public endpoint. Auth optional (for reaction info). Includes replies for each comment."
+					}
+				},
+				{
+					"name": "Update Comment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"Updated comment content\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/comments/:commentId",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "comments", ":commentId"],
+							"variable": [
+								{
+									"key": "commentId",
+									"value": "{{comment_id}}"
+								}
+							]
+						},
+						"description": "Update a comment. Only comment owner can update. Content must be 1-2000 characters."
+					}
+				},
+				{
+					"name": "Delete Comment",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/v1/comments/:commentId",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "comments", ":commentId"],
+							"variable": [
+								{
+									"key": "commentId",
+									"value": "{{comment_id}}"
+								}
+							]
+						},
+						"description": "Delete a comment (soft delete). Only comment owner can delete."
 					}
 				}
 			]
