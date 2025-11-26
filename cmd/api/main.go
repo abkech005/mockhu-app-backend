@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"mockhu-app-backend/internal/app/auth"
+	"mockhu-app-backend/internal/app/follow"
 	"mockhu-app-backend/internal/app/interest"
 	"mockhu-app-backend/internal/app/onboarding"
 	"mockhu-app-backend/internal/app/upload"
@@ -72,11 +73,17 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 	onboardingService := onboarding.NewService(authRepo, interestRepo)
 	onboardingHandler := onboarding.NewHandler(onboardingService)
 
+	// Follow dependencies
+	followRepo := follow.NewPostgresFollowRepository(pg.Pool)
+	followService := follow.NewService(followRepo, authRepo)
+	followHandler := follow.NewHandler(followService)
+
 	// Register domain routes
 	auth.RegisterRoutes(app, authHandler)
 	interest.RegisterRoutes(app, interestHandler)
 	onboarding.RegisterRoutes(app, onboardingHandler)
 	upload.RegisterRoutes(app)
+	follow.RegisterRoutes(app, followHandler)
 
 	return app
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -130,18 +131,39 @@ func (s *Service) Signup(ctx context.Context, method, email, phone, password str
 	return result, nil
 }
 
-// Login authenticates a user with their email and password.
+// Login authenticates a user with their email/phone and password.
 // It performs the following validations:
-//   - Checks if the user exists
+//   - Checks if the user exists (by email or phone)
 //   - Verifies the account is active
 //   - Validates the password against the stored hash
 //   - Updates the last login timestamp
 //
 // Returns the authenticated user or an error if authentication fails.
-func (s *Service) Login(ctx context.Context, email, password string) (*User, error) {
-	// Find user by email
-	user, err := s.repo.FindByEmail(ctx, email)
-	if err != nil {
+func (s *Service) Login(ctx context.Context, identifier, password string) (*User, error) {
+	var user *User
+	var err error
+
+	// Try to find user by email first (if identifier contains @)
+	// Otherwise try by phone
+	if strings.Contains(identifier, "@") {
+		user, err = s.repo.FindByEmail(ctx, identifier)
+	} else {
+		user, err = s.repo.FindByPhone(ctx, identifier)
+	}
+
+	// If not found by email/phone, try the other method
+	if err != nil || user == nil {
+		if strings.Contains(identifier, "@") {
+			// Already tried email, try phone
+			user, err = s.repo.FindByPhone(ctx, identifier)
+		} else {
+			// Already tried phone, try email
+			user, err = s.repo.FindByEmail(ctx, identifier)
+		}
+	}
+
+	// If still not found, return invalid credentials
+	if err != nil || user == nil {
 		return nil, errors.New("invalid credentials")
 	}
 
