@@ -1,0 +1,522 @@
+{
+	"info": {
+		"_postman_id": "share-api-collection",
+		"name": "Mockhu - Share API",
+		"description": "Complete API collection for Share System - Post sharing functionality",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "mockhu-api"
+	},
+	"item": [
+		{
+			"name": "Public Endpoints",
+			"item": [
+				{
+					"name": "Get Share",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has share data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('post_id');",
+									"    pm.expect(jsonData).to.have.property('user');",
+									"    pm.expect(jsonData).to.have.property('shared_to_type');",
+									"    pm.expect(jsonData).to.have.property('created_at');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/shares/:shareId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"shares",
+								":shareId"
+							],
+							"variable": [
+								{
+									"key": "shareId",
+									"value": "{{share_id}}",
+									"description": "ID of the share"
+								}
+							]
+						},
+						"description": "Get a single share by its ID. This is a public endpoint and does not require authentication.\n\n**Response includes:**\n- Share ID\n- Post ID\n- User information (ID, username, first name, avatar)\n- Share type (timeline, dm, external)\n- Created timestamp"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Post Shares",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has shares array and pagination\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('shares');",
+									"    pm.expect(jsonData).to.have.property('pagination');",
+									"    pm.expect(jsonData.shares).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/posts/:postId/shares?page=1&limit=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"posts",
+								":postId",
+								"shares"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Items per page (default: 20, max: 50)"
+								}
+							],
+							"variable": [
+								{
+									"key": "postId",
+									"value": "{{post_id}}",
+									"description": "ID of the post"
+								}
+							]
+						},
+						"description": "Get all shares for a specific post. This is a public endpoint and does not require authentication.\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 20, max: 50)\n\n**Response includes:**\n- Array of shares with user information\n- Pagination metadata (page, total_pages, total_items, limit)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Share Count",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has count\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('post_id');",
+									"    pm.expect(jsonData).to.have.property('count');",
+									"    pm.expect(jsonData.count).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/posts/:postId/shares/count",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"posts",
+								":postId",
+								"shares",
+								"count"
+							],
+							"variable": [
+								{
+									"key": "postId",
+									"value": "{{post_id}}",
+									"description": "ID of the post"
+								}
+							]
+						},
+						"description": "Get the total count of shares for a specific post. This is a public endpoint and does not require authentication.\n\n**Response:**\n- `post_id`: The post ID\n- `count`: Total number of shares"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Shares",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has shares array and pagination\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('shares');",
+									"    pm.expect(jsonData).to.have.property('pagination');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/users/:userId/shares?page=1&limit=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								":userId",
+								"shares"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Items per page (default: 20, max: 50)"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{user_id}}",
+									"description": "ID of the user"
+								}
+							]
+						},
+						"description": "Get all shares made by a specific user. This is a public endpoint and does not require authentication.\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 20, max: 50)\n\n**Response includes:**\n- Array of shares with user information\n- Pagination metadata"
+					},
+					"response": []
+				}
+			],
+			"description": "Public endpoints that do not require authentication"
+		},
+		{
+			"name": "Protected Endpoints",
+			"item": [
+				{
+					"name": "Create Share",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has share data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('post_id');",
+									"    pm.expect(jsonData).to.have.property('user');",
+									"    pm.expect(jsonData).to.have.property('shared_to_type');",
+									"    ",
+									"    // Save share ID for other requests",
+									"    pm.environment.set(\"share_id\", jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"shared_to_type\": \"timeline\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/posts/:postId/shares",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"posts",
+								":postId",
+								"shares"
+							],
+							"variable": [
+								{
+									"key": "postId",
+									"value": "{{post_id}}",
+									"description": "ID of the post to share"
+								}
+							]
+						},
+						"description": "Share a post. Requires authentication.\n\n**Share Types:**\n- `timeline`: Share to user's timeline (default)\n- `dm`: Share via direct message\n- `external`: Share externally\n\n**Note:** A user can only share a post once. Attempting to share again will return a 409 Conflict error.\n\n**Request Body:**\n```json\n{\n    \"shared_to_type\": \"timeline\"\n}\n```\n\n**Response:** Created share object with user information"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"shared_to_type\": \"timeline\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/posts/:postId/shares",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "posts", ":postId", "shares"],
+									"variable": [
+										{
+											"key": "postId",
+											"value": "post-uuid-here"
+										}
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"id\": \"share-uuid\",\n    \"post_id\": \"post-uuid\",\n    \"user\": {\n        \"id\": \"user-uuid\",\n        \"username\": \"johndoe\",\n        \"first_name\": \"John\",\n        \"avatar_url\": \"https://example.com/avatar.jpg\"\n    },\n    \"shared_to_type\": \"timeline\",\n    \"created_at\": \"2025-11-26T10:30:00Z\"\n}"
+						},
+						{
+							"name": "Duplicate Share Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"shared_to_type\": \"timeline\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/posts/:postId/shares",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "posts", ":postId", "shares"],
+									"variable": [
+										{
+											"key": "postId",
+											"value": "post-uuid-here"
+										}
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"error\": \"post already shared by user\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Delete Share",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.include('deleted');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/v1/shares/:shareId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"v1",
+								"shares",
+								":shareId"
+							],
+							"variable": [
+								{
+									"key": "shareId",
+									"value": "{{share_id}}",
+									"description": "ID of the share to delete"
+								}
+							]
+						},
+						"description": "Delete a share. Requires authentication. Only the owner of the share can delete it.\n\n**Note:** If you try to delete a share that doesn't belong to you, you'll get a 403 Forbidden error."
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/shares/:shareId",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "shares", ":shareId"],
+									"variable": [
+										{
+											"key": "shareId",
+											"value": "share-uuid-here"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"message\": \"share deleted successfully\"\n}"
+						},
+						{
+							"name": "Unauthorized",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/shares/:shareId",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "shares", ":shareId"],
+									"variable": [
+										{
+											"key": "shareId",
+											"value": "share-uuid-here"
+										}
+									]
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"error\": \"unauthorized to delete this share\"\n}"
+						}
+					]
+				}
+			],
+			"description": "Protected endpoints that require authentication (Bearer token)"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8085",
+			"type": "string"
+		}
+	]
+}
+

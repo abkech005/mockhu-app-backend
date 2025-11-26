@@ -385,3 +385,4 @@ func (s *postService) convertPostsToResponse(ctx context.Context, posts []*Post,
 
 	return responses, nil
 }
+

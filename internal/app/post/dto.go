@@ -52,3 +52,4 @@ type ReactionResponse struct {
 	FireCount   int    `json:"fire_count"`
 	IsFiredByMe bool   `json:"is_fired_by_me"`
 }
+

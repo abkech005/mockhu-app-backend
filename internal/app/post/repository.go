@@ -21,3 +21,4 @@ type PostRepository interface {
 	GetReactionCount(ctx context.Context, postID string) (int, error)
 	HasUserReacted(ctx context.Context, postID, userID string) (bool, error)
 }
+

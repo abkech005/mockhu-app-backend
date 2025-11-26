@@ -82,10 +82,10 @@ func main() {
 		numPosts := rand.Intn(3) + 3
 		for j := 0; j < numPosts && j < len(postContents); j++ {
 			content := postContents[(i*numPosts+j)%len(postContents)]
-			
+
 			// Randomize view count
 			viewCount := rand.Intn(200)
-			
+
 			// Randomize creation time (within last 3 days)
 			createdAt := time.Now().Add(-time.Duration(rand.Intn(72)) * time.Hour)
 
@@ -130,4 +130,3 @@ func main() {
 
 	log.Printf("\n✅ Successfully created %d posts with reactions!", postCount)
 }
-

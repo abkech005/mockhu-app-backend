@@ -230,3 +230,4 @@ func (h *Handler) GetFeed(c *fiber.Ctx) error {
 
 	return c.JSON(response)
 }
+

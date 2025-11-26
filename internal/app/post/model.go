@@ -23,3 +23,4 @@ type Reaction struct {
 	ReactionType string    `json:"reaction_type"`
 	CreatedAt    time.Time `json:"created_at"`
 }
+

@@ -14,3 +14,4 @@ DELETE FROM post_reactions WHERE post_id IN (
 -- Note: This is a simple approach - in production, you might want to tag seeded posts
 DELETE FROM posts WHERE created_at >= NOW() - INTERVAL '3 days';
 
+

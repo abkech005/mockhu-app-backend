@@ -25,3 +25,4 @@ func RegisterRoutes(app *fiber.App, handler *Handler) {
 	users := v1.Group("/users")
 	users.Get("/:userId/posts", handler.GetUserPosts)
 }
+
