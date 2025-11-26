@@ -17,3 +17,6 @@ migrate-down:
 
 run:
 	go run cmd/api/main.go
+
+seed-posts:
+	go run scripts/seed_posts.go
