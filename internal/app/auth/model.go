@@ -15,6 +15,17 @@ type User struct {
 	DOB                 time.Time  `json:"dob"`
 	PasswordHash        string     `json:"-"` // Never expose in JSON
 	AvatarURL           string     `json:"avatar_url"`
+	
+	// Profile fields
+	Bio           string  `json:"bio,omitempty"`
+	InstitutionID *string `json:"institution_id,omitempty"`
+	
+	// Privacy settings
+	WhoCanMessage     string `json:"who_can_message"`
+	WhoCanSeePosts    string `json:"who_can_see_posts"`
+	ShowFollowersList bool   `json:"show_followers_list"`
+	ShowFollowingList bool   `json:"show_following_list"`
+	
 	IsActive            bool       `json:"is_active"`
 	OnboardingCompleted bool       `json:"onboarding_completed"`
 	OnboardedAt         *time.Time `json:"onboarded_at,omitempty"`

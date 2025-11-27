@@ -20,18 +20,58 @@ func NewHandler(service ProfileService) *Handler {
 
 // GetUserProfile handles GET /v1/users/:userId/profile
 func (h *Handler) GetUserProfile(c *fiber.Ctx) error {
-	// TODO: Implement in Phase 3
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "not implemented yet",
-	})
+	// Get user ID from URL params
+	userID := c.Params("userId")
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "user ID is required",
+		})
+	}
+
+	// Get current user ID from context (optional - for authenticated users)
+	currentUserID, _ := c.Locals("user_id").(string)
+
+	// Get profile
+	profile, err := h.service.GetUserProfile(c.Context(), userID, currentUserID)
+	if err != nil {
+		// Check if user not found
+		if err.Error() == "user not found" || err.Error() == "user not found: no rows in result set" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get profile",
+		})
+	}
+
+	return c.JSON(profile)
 }
 
 // GetOwnProfile handles GET /v1/users/me/profile
 func (h *Handler) GetOwnProfile(c *fiber.Ctx) error {
-	// TODO: Implement in Phase 3
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "not implemented yet",
-	})
+	// Get current user ID from JWT
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	// Get profile
+	profile, err := h.service.GetOwnProfile(c.Context(), currentUserID)
+	if err != nil {
+		if err.Error() == "user not found" || err.Error() == "user not found: no rows in result set" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get profile",
+		})
+	}
+
+	return c.JSON(profile)
 }
 
 // UpdateProfile handles PUT /v1/users/me/profile
