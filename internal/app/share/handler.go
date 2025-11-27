@@ -228,5 +228,3 @@ func (h *Handler) GetShareCount(c *fiber.Ctx) error {
 		"count":   count,
 	})
 }
-
-
