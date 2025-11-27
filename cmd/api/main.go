@@ -62,6 +62,9 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 	}))
 	app.Use(recover.New())
 
+	// Serve static files (avatars)
+	app.Static("/avatars", "./storage/avatars")
+
 	// Build dependency layers: Repository -> Service -> Handler
 	authRepo := auth.NewPostgresUserRepository(pg.Pool)
 	verificationRepo := auth.NewPostgresVerificationRepository(pg.Pool)

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"mockhu-app-backend/internal/pkg/avatar"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -193,7 +195,7 @@ func (s *profileService) UpdateProfile(ctx context.Context, userID string, req *
 
 	// Build updates map
 	updates := make(map[string]interface{})
-	
+
 	if req.FirstName != "" {
 		updates["first_name"] = req.FirstName
 	}
@@ -257,7 +259,7 @@ func (s *profileService) validateUpdateProfileRequest(req *UpdateProfileRequest)
 		}
 		// Check if username contains only alphanumeric and underscore
 		for _, char := range req.Username {
-			if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || 
+			if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
 				(char >= '0' && char <= '9') || char == '_') {
 				return errors.New("username can only contain letters, numbers, and underscores")
 			}
@@ -268,12 +270,65 @@ func (s *profileService) validateUpdateProfileRequest(req *UpdateProfileRequest)
 }
 
 func (s *profileService) UploadAvatar(ctx context.Context, userID string, fileBytes []byte, filename string) (*AvatarUploadResponse, error) {
-	// TODO: Implement in Phase 5
-	return nil, nil
+	// Get current user to retrieve old avatar
+	user, err := s.profileRepo.GetProfileByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("user not found: %w", err)
+	}
+
+	// Process and save new avatar (resize, validate, save to storage)
+	avatarURL, err := avatar.ProcessAndSave(fileBytes, filename)
+	if err != nil {
+		// Return user-friendly error messages
+		if errors.Is(err, avatar.ErrFileTooBig) {
+			return nil, errors.New("file size exceeds 5MB")
+		}
+		if errors.Is(err, avatar.ErrInvalidFileType) {
+			return nil, errors.New("invalid file type, only JPEG, PNG, and WebP allowed")
+		}
+		return nil, fmt.Errorf("failed to process image: %w", err)
+	}
+
+	// Update database with new avatar URL
+	err = s.profileRepo.UpdateAvatar(ctx, userID, avatarURL)
+	if err != nil {
+		// If database update fails, try to delete the uploaded file
+		_ = avatar.DeleteAvatar(avatarURL)
+		return nil, fmt.Errorf("failed to update avatar: %w", err)
+	}
+
+	// Delete old avatar file if it exists
+	if user.AvatarURL != "" {
+		_ = avatar.DeleteAvatar(user.AvatarURL)
+	}
+
+	return &AvatarUploadResponse{
+		AvatarURL: avatarURL,
+		Message:   "avatar uploaded successfully",
+	}, nil
 }
 
 func (s *profileService) DeleteAvatar(ctx context.Context, userID string) error {
-	// TODO: Implement in Phase 5
+	// Get current user to retrieve avatar URL
+	user, err := s.profileRepo.GetProfileByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("user not found: %w", err)
+	}
+
+	// Delete avatar file
+	if user.AvatarURL != "" {
+		err = avatar.DeleteAvatar(user.AvatarURL)
+		if err != nil {
+			return fmt.Errorf("failed to delete avatar file: %w", err)
+		}
+	}
+
+	// Update database (set avatar_url to empty string)
+	err = s.profileRepo.UpdateAvatar(ctx, userID, "")
+	if err != nil {
+		return fmt.Errorf("failed to update avatar: %w", err)
+	}
+
 	return nil
 }
 

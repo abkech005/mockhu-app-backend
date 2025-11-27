@@ -15,7 +15,7 @@ func RegisterRoutes(app *fiber.App, handler *Handler) {
 	posts.Get("/:postId", handler.GetPost)
 
 	// Protected routes (auth required)
-	protected := v1.Group("", middleware.AuthMiddleware())
+	protected := v1.Group("/v1/posts", middleware.AuthMiddleware())
 	protected.Post("/posts", handler.CreatePost)
 	protected.Delete("/posts/:postId", handler.DeletePost)
 	protected.Post("/posts/:postId/reactions", handler.ToggleReaction)
@@ -25,4 +25,3 @@ func RegisterRoutes(app *fiber.App, handler *Handler) {
 	users := v1.Group("/users")
 	users.Get("/:userId/posts", handler.GetUserPosts)
 }
-

@@ -124,17 +124,93 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 
 // UploadAvatar handles POST /v1/users/me/avatar
 func (h *Handler) UploadAvatar(c *fiber.Ctx) error {
-	// TODO: Implement in Phase 5
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "not implemented yet",
-	})
+	// Get current user ID from JWT
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	// Parse multipart form
+	file, err := c.FormFile("avatar")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "avatar file is required",
+		})
+	}
+
+	// Open and read file
+	fileHandle, err := file.Open()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to read file",
+		})
+	}
+	defer fileHandle.Close()
+
+	// Read file bytes
+	fileBytes := make([]byte, file.Size)
+	_, err = fileHandle.Read(fileBytes)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to read file",
+		})
+	}
+
+	// Upload avatar
+	response, err := h.service.UploadAvatar(c.Context(), currentUserID, fileBytes, file.Filename)
+	if err != nil {
+		// Handle specific errors
+		errMsg := err.Error()
+		if errMsg == "file size exceeds 5MB" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "file size exceeds 5MB",
+			})
+		}
+		if errMsg == "invalid file type, only JPEG, PNG, and WebP allowed" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid file type, only JPEG, PNG, and WebP allowed",
+			})
+		}
+		if errMsg == "user not found" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to upload avatar",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 // DeleteAvatar handles DELETE /v1/users/me/avatar
 func (h *Handler) DeleteAvatar(c *fiber.Ctx) error {
-	// TODO: Implement in Phase 5
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "not implemented yet",
+	// Get current user ID from JWT
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	// Delete avatar
+	err := h.service.DeleteAvatar(c.Context(), currentUserID)
+	if err != nil {
+		if err.Error() == "user not found" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to delete avatar",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "avatar deleted successfully",
 	})
 }
 

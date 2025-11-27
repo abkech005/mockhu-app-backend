@@ -113,7 +113,7 @@ func (r *PostgresProfileRepository) UpdateProfile(ctx context.Context, userID st
 // CheckUsernameExists checks if a username already exists (excluding a specific user)
 func (r *PostgresProfileRepository) CheckUsernameExists(ctx context.Context, username string, excludeUserID string) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(username) = LOWER($1) AND id != $2)`
-	
+
 	var exists bool
 	err := r.db.QueryRow(ctx, query, username, excludeUserID).Scan(&exists)
 	if err != nil {
@@ -125,7 +125,13 @@ func (r *PostgresProfileRepository) CheckUsernameExists(ctx context.Context, use
 
 // UpdateAvatar updates the user's avatar URL
 func (r *PostgresProfileRepository) UpdateAvatar(ctx context.Context, userID string, avatarURL string) error {
-	// TODO: Implement in Phase 5
+	query := `UPDATE users SET avatar_url = $1, updated_at = NOW() WHERE id = $2`
+	
+	_, err := r.db.Exec(ctx, query, avatarURL, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update avatar: %w", err)
+	}
+
 	return nil
 }
 

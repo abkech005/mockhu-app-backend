@@ -15,9 +15,8 @@ func RegisterRoutes(app *fiber.App, handler *Handler) {
 	v1.Get("/posts/:postId/comments", handler.GetPostComments)
 
 	// Protected routes (auth required)
-	protected := v1.Group("", middleware.AuthMiddleware())
+	protected := v1.Group("/v1/comments", middleware.AuthMiddleware())
 	protected.Post("/posts/:postId/comments", handler.CreateComment)
 	protected.Put("/comments/:commentId", handler.UpdateComment)
 	protected.Delete("/comments/:commentId", handler.DeleteComment)
 }
-
