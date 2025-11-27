@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -185,8 +186,85 @@ func (s *profileService) getMutualConnectionsCount(ctx context.Context, user1ID,
 // Placeholder implementations for other methods
 
 func (s *profileService) UpdateProfile(ctx context.Context, userID string, req *UpdateProfileRequest) (*ProfileResponse, error) {
-	// TODO: Implement in Phase 4
-	return nil, nil
+	// Validate input
+	if err := s.validateUpdateProfileRequest(req); err != nil {
+		return nil, err
+	}
+
+	// Build updates map
+	updates := make(map[string]interface{})
+	
+	if req.FirstName != "" {
+		updates["first_name"] = req.FirstName
+	}
+	if req.LastName != "" {
+		updates["last_name"] = req.LastName
+	}
+	if req.Bio != "" {
+		// Sanitize bio (remove dangerous content)
+		updates["bio"] = req.Bio
+	}
+	if req.Username != "" {
+		// Check username uniqueness
+		exists, err := s.profileRepo.CheckUsernameExists(ctx, req.Username, userID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check username: %w", err)
+		}
+		if exists {
+			return nil, errors.New("username already taken")
+		}
+		updates["username"] = req.Username
+	}
+
+	// If no updates, return error
+	if len(updates) == 0 {
+		return nil, errors.New("no fields to update")
+	}
+
+	// Update profile
+	err := s.profileRepo.UpdateProfile(ctx, userID, updates)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update profile: %w", err)
+	}
+
+	// Get updated profile
+	return s.GetUserProfile(ctx, userID, userID)
+}
+
+// validateUpdateProfileRequest validates the update profile request
+func (s *profileService) validateUpdateProfileRequest(req *UpdateProfileRequest) error {
+	if req.FirstName != "" {
+		if len(req.FirstName) < 1 || len(req.FirstName) > 50 {
+			return errors.New("first name must be between 1 and 50 characters")
+		}
+	}
+
+	if req.LastName != "" {
+		if len(req.LastName) < 1 || len(req.LastName) > 50 {
+			return errors.New("last name must be between 1 and 50 characters")
+		}
+	}
+
+	if req.Bio != "" {
+		if len(req.Bio) > 500 {
+			return errors.New("bio must not exceed 500 characters")
+		}
+	}
+
+	if req.Username != "" {
+		if len(req.Username) < 3 || len(req.Username) > 30 {
+			return errors.New("username must be between 3 and 30 characters")
+		}
+		// Check if username contains only alphanumeric and underscore
+		for _, char := range req.Username {
+			if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || 
+				(char >= '0' && char <= '9') || char == '_') {
+				return errors.New("username can only contain letters, numbers, and underscores")
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *profileService) UploadAvatar(ctx context.Context, userID string, fileBytes []byte, filename string) (*AvatarUploadResponse, error) {

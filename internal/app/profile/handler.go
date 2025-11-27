@@ -63,7 +63,7 @@ func (h *Handler) GetOwnProfile(c *fiber.Ctx) error {
 	if err != nil {
 		// Return actual error for debugging
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to get profile",
+			"error":   "failed to get profile",
 			"details": err.Error(),
 		})
 	}
@@ -73,10 +73,53 @@ func (h *Handler) GetOwnProfile(c *fiber.Ctx) error {
 
 // UpdateProfile handles PUT /v1/users/me/profile
 func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
-	// TODO: Implement in Phase 4
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "not implemented yet",
-	})
+	// Get current user ID from JWT
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	// Parse request body
+	var req UpdateProfileRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	// Update profile
+	profile, err := h.service.UpdateProfile(c.Context(), currentUserID, &req)
+	if err != nil {
+		// Handle specific errors
+		errMsg := err.Error()
+		if errMsg == "username already taken" {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": "username already taken",
+			})
+		}
+		if errMsg == "no fields to update" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "no fields to update",
+			})
+		}
+		// Validation errors
+		if errMsg == "first name must be between 1 and 50 characters" ||
+			errMsg == "last name must be between 1 and 50 characters" ||
+			errMsg == "bio must not exceed 500 characters" ||
+			errMsg == "username must be between 3 and 30 characters" ||
+			errMsg == "username can only contain letters, numbers, and underscores" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": errMsg,
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to update profile",
+		})
+	}
+
+	return c.JSON(profile)
 }
 
 // UploadAvatar handles POST /v1/users/me/avatar

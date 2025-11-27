@@ -12,7 +12,7 @@ func RegisterRoutes(app *fiber.App, handler *Handler) {
 
 	// IMPORTANT: Register literal routes (/me/*) BEFORE parameterized routes (/:userId/*)
 	// to avoid route conflicts where :userId matches "me"
-	
+
 	// Protected routes (auth required) - literal routes first
 	users.Get("/me/profile", middleware.AuthMiddleware(), handler.GetOwnProfile)
 	users.Put("/me/profile", middleware.AuthMiddleware(), handler.UpdateProfile)

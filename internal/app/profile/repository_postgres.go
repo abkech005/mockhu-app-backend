@@ -84,14 +84,43 @@ func (r *PostgresProfileRepository) GetProfileByID(ctx context.Context, userID s
 
 // UpdateProfile updates user profile fields
 func (r *PostgresProfileRepository) UpdateProfile(ctx context.Context, userID string, updates map[string]interface{}) error {
-	// TODO: Implement in Phase 4
+	// Build dynamic UPDATE query
+	query := `UPDATE users SET `
+	args := []interface{}{}
+	argPos := 1
+
+	for field, value := range updates {
+		if argPos > 1 {
+			query += ", "
+		}
+		query += fmt.Sprintf("%s = $%d", field, argPos)
+		args = append(args, value)
+		argPos++
+	}
+
+	// Add WHERE clause and updated_at
+	query += fmt.Sprintf(", updated_at = NOW() WHERE id = $%d", argPos)
+	args = append(args, userID)
+
+	_, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update profile: %w", err)
+	}
+
 	return nil
 }
 
 // CheckUsernameExists checks if a username already exists (excluding a specific user)
 func (r *PostgresProfileRepository) CheckUsernameExists(ctx context.Context, username string, excludeUserID string) (bool, error) {
-	// TODO: Implement in Phase 4
-	return false, nil
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(username) = LOWER($1) AND id != $2)`
+	
+	var exists bool
+	err := r.db.QueryRow(ctx, query, username, excludeUserID).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to check username: %w", err)
+	}
+
+	return exists, nil
 }
 
 // UpdateAvatar updates the user's avatar URL
