@@ -162,7 +162,7 @@ func (r *PostgresProfileRepository) GetPrivacySettings(ctx context.Context, user
 func (r *PostgresProfileRepository) UpdatePrivacySettings(ctx context.Context, userID string, settings *UpdatePrivacyRequest) error {
 	// Build dynamic UPDATE query
 	updates := make(map[string]interface{})
-	
+
 	if settings.WhoCanMessage != "" {
 		updates["who_can_message"] = settings.WhoCanMessage
 	}
@@ -208,12 +208,105 @@ func (r *PostgresProfileRepository) UpdatePrivacySettings(ctx context.Context, u
 
 // GetMutualConnections retrieves mutual connections between two users
 func (r *PostgresProfileRepository) GetMutualConnections(ctx context.Context, user1ID, user2ID string, limit, offset int) ([]*auth.User, error) {
-	// TODO: Implement in Phase 7
-	return nil, nil
+	// Find users that BOTH user1 AND user2 follow
+	query := `
+		SELECT u.id, 
+			COALESCE(u.email, ''), 
+			u.email_verified, 
+			COALESCE(u.phone, ''), 
+			u.phone_verified,
+			COALESCE(u.username, ''), 
+			COALESCE(u.first_name, ''), 
+			COALESCE(u.last_name, ''), 
+			u.dob, 
+			COALESCE(u.avatar_url, ''),
+			COALESCE(u.bio, ''), 
+			u.institution_id,
+			u.who_can_message, 
+			u.who_can_see_posts, 
+			u.show_followers_list, 
+			u.show_following_list,
+			u.is_active, 
+			u.onboarding_completed, 
+			u.onboarded_at,
+			u.last_login_at, 
+			u.created_at, 
+			u.updated_at
+		FROM users u
+		INNER JOIN user_follows uf1 ON u.id = uf1.following_id AND uf1.follower_id = $1
+		INNER JOIN user_follows uf2 ON u.id = uf2.following_id AND uf2.follower_id = $2
+		WHERE u.id NOT IN ($1, $2)
+		AND u.is_active = true
+		ORDER BY u.first_name, u.username
+		LIMIT $3 OFFSET $4
+	`
+
+	rows, err := r.db.Query(ctx, query, user1ID, user2ID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get mutual connections: %w", err)
+	}
+	defer rows.Close()
+
+	users := []*auth.User{}
+	for rows.Next() {
+		user := &auth.User{}
+		err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.EmailVerified,
+			&user.Phone,
+			&user.PhoneVerified,
+			&user.Username,
+			&user.FirstName,
+			&user.LastName,
+			&user.DOB,
+			&user.AvatarURL,
+			&user.Bio,
+			&user.InstitutionID,
+			&user.WhoCanMessage,
+			&user.WhoCanSeePosts,
+			&user.ShowFollowersList,
+			&user.ShowFollowingList,
+			&user.IsActive,
+			&user.OnboardingCompleted,
+			&user.OnboardedAt,
+			&user.LastLoginAt,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			continue // Skip errors, continue with other users
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
 }
 
 // GetMutualConnectionsCount retrieves the count of mutual connections
 func (r *PostgresProfileRepository) GetMutualConnectionsCount(ctx context.Context, user1ID, user2ID string) (int, error) {
-	// TODO: Implement in Phase 7
-	return 0, nil
+	query := `
+		SELECT COUNT(DISTINCT u.id)
+		FROM users u
+		WHERE u.id IN (
+			SELECT uf1.following_id 
+			FROM user_follows uf1
+			WHERE uf1.follower_id = $1
+		)
+		AND u.id IN (
+			SELECT uf2.following_id 
+			FROM user_follows uf2
+			WHERE uf2.follower_id = $2
+		)
+		AND u.id NOT IN ($1, $2)
+		AND u.is_active = true
+	`
+
+	var count int
+	err := r.db.QueryRow(ctx, query, user1ID, user2ID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get mutual connections count: %w", err)
+	}
+
+	return count, nil
 }

@@ -12,7 +12,7 @@ func RegisterRoutes(app *fiber.App, handler *Handler) {
 
 	// IMPORTANT: Register literal routes (/me/*) BEFORE parameterized routes (/:userId/*)
 	// to avoid route conflicts where :userId matches "me"
-
+	
 	// Protected routes (auth required) - literal routes first
 	users.Get("/me/profile", middleware.AuthMiddleware(), handler.GetOwnProfile)
 	users.Put("/me/profile", middleware.AuthMiddleware(), handler.UpdateProfile)
@@ -21,8 +21,10 @@ func RegisterRoutes(app *fiber.App, handler *Handler) {
 	users.Get("/me/privacy", middleware.AuthMiddleware(), handler.GetPrivacySettings)
 	users.Put("/me/privacy", middleware.AuthMiddleware(), handler.UpdatePrivacySettings)
 
-	// Public routes (no auth required) - parameterized routes last
+	// Public routes (no auth required)
 	users.Get("/:userId/profile", handler.GetUserProfile)
-	users.Get("/:userId/mutual-connections", handler.GetMutualConnections)
-	users.Get("/:userId/mutual-connections/count", handler.GetMutualConnectionsCount)
+	
+	// Mutual connections (auth required) - parameterized routes last
+	users.Get("/:userId/mutual-connections", middleware.AuthMiddleware(), handler.GetMutualConnections)
+	users.Get("/:userId/mutual-connections/count", middleware.AuthMiddleware(), handler.GetMutualConnectionsCount)
 }

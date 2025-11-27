@@ -274,16 +274,65 @@ func (h *Handler) UpdatePrivacySettings(c *fiber.Ctx) error {
 
 // GetMutualConnections handles GET /v1/users/:userId/mutual-connections
 func (h *Handler) GetMutualConnections(c *fiber.Ctx) error {
-	// TODO: Implement in Phase 7
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "not implemented yet",
-	})
+	// Get current user ID from JWT (required)
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	// Get target user ID from URL params
+	targetUserID := c.Params("userId")
+	if targetUserID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "user ID is required",
+		})
+	}
+
+	// Parse pagination parameters
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 20)
+
+	// Get mutual connections
+	response, err := h.service.GetMutualConnections(c.Context(), currentUserID, targetUserID, page, limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get mutual connections",
+		})
+	}
+
+	return c.JSON(response)
 }
 
 // GetMutualConnectionsCount handles GET /v1/users/:userId/mutual-connections/count
 func (h *Handler) GetMutualConnectionsCount(c *fiber.Ctx) error {
-	// TODO: Implement in Phase 7
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "not implemented yet",
+	// Get current user ID from JWT (required)
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	// Get target user ID from URL params
+	targetUserID := c.Params("userId")
+	if targetUserID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "user ID is required",
+		})
+	}
+
+	// Get mutual connections count
+	count, err := h.service.GetMutualConnectionsCount(c.Context(), currentUserID, targetUserID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get mutual connections count",
+		})
+	}
+
+	return c.JSON(MutualConnectionsCountResponse{
+		UserID:                 targetUserID,
+		MutualConnectionsCount: count,
 	})
 }

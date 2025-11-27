@@ -378,11 +378,61 @@ func (s *profileService) validatePrivacySettings(req *UpdatePrivacyRequest) erro
 }
 
 func (s *profileService) GetMutualConnections(ctx context.Context, currentUserID, targetUserID string, page, limit int) (*MutualConnectionsResponse, error) {
-	// TODO: Implement in Phase 7
-	return nil, nil
+	// Validate pagination
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 50 {
+		limit = 20
+	}
+
+	offset := (page - 1) * limit
+
+	// Get mutual connections from repository
+	users, err := s.profileRepo.GetMutualConnections(ctx, currentUserID, targetUserID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get mutual connections: %w", err)
+	}
+
+	// Convert to response format
+	connections := make([]*MutualConnectionUser, 0, len(users))
+	for _, user := range users {
+		connections = append(connections, &MutualConnectionUser{
+			ID:        user.ID,
+			Username:  user.Username,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			AvatarURL: user.AvatarURL,
+		})
+	}
+
+	// Get total count for pagination
+	totalCount, err := s.profileRepo.GetMutualConnectionsCount(ctx, currentUserID, targetUserID)
+	if err != nil {
+		totalCount = len(connections) // Fallback to current page count
+	}
+
+	totalPages := (totalCount + limit - 1) / limit
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
+	return &MutualConnectionsResponse{
+		MutualConnections: connections,
+		Pagination: PaginationInfo{
+			Page:       page,
+			TotalPages: totalPages,
+			TotalItems: totalCount,
+			Limit:      limit,
+		},
+	}, nil
 }
 
 func (s *profileService) GetMutualConnectionsCount(ctx context.Context, currentUserID, targetUserID string) (int, error) {
-	// TODO: Implement in Phase 7
-	return 0, nil
+	count, err := s.profileRepo.GetMutualConnectionsCount(ctx, currentUserID, targetUserID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get mutual connections count: %w", err)
+	}
+
+	return count, nil
 }
