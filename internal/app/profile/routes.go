@@ -8,19 +8,21 @@ import (
 
 // RegisterRoutes registers all profile-related routes
 func RegisterRoutes(app *fiber.App, handler *Handler) {
-	v1 := app.Group("/v1")
+	users := app.Group("/v1/users")
 
-	// Public routes (no auth required)
-	v1.Get("/users/:userId/profile", handler.GetUserProfile)
-	v1.Get("/users/:userId/mutual-connections", handler.GetMutualConnections)
-	v1.Get("/users/:userId/mutual-connections/count", handler.GetMutualConnectionsCount)
+	// IMPORTANT: Register literal routes (/me/*) BEFORE parameterized routes (/:userId/*)
+	// to avoid route conflicts where :userId matches "me"
+	
+	// Protected routes (auth required) - literal routes first
+	users.Get("/me/profile", middleware.AuthMiddleware(), handler.GetOwnProfile)
+	users.Put("/me/profile", middleware.AuthMiddleware(), handler.UpdateProfile)
+	users.Post("/me/avatar", middleware.AuthMiddleware(), handler.UploadAvatar)
+	users.Delete("/me/avatar", middleware.AuthMiddleware(), handler.DeleteAvatar)
+	users.Get("/me/privacy", middleware.AuthMiddleware(), handler.GetPrivacySettings)
+	users.Put("/me/privacy", middleware.AuthMiddleware(), handler.UpdatePrivacySettings)
 
-	// Protected routes (auth required)
-	protected := v1.Group("", middleware.AuthMiddleware())
-	protected.Get("/users/me/profile", handler.GetOwnProfile)
-	protected.Put("/users/me/profile", handler.UpdateProfile)
-	protected.Post("/users/me/avatar", handler.UploadAvatar)
-	protected.Delete("/users/me/avatar", handler.DeleteAvatar)
-	protected.Get("/users/me/privacy", handler.GetPrivacySettings)
-	protected.Put("/users/me/privacy", handler.UpdatePrivacySettings)
+	// Public routes (no auth required) - parameterized routes last
+	users.Get("/:userId/profile", handler.GetUserProfile)
+	users.Get("/:userId/mutual-connections", handler.GetMutualConnections)
+	users.Get("/:userId/mutual-connections/count", handler.GetMutualConnectionsCount)
 }

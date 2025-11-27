@@ -23,13 +23,28 @@ func NewPostgresProfileRepository(db *pgxpool.Pool) ProfileRepository {
 func (r *PostgresProfileRepository) GetProfileByID(ctx context.Context, userID string) (*auth.User, error) {
 	query := `
 		SELECT 
-			id, email, email_verified, phone, phone_verified,
-			username, first_name, last_name, dob, avatar_url,
-			bio, institution_id,
-			who_can_message, who_can_see_posts, 
-			show_followers_list, show_following_list,
-			is_active, onboarding_completed, onboarded_at,
-			last_login_at, created_at, updated_at
+			id, 
+			COALESCE(email, ''), 
+			email_verified, 
+			COALESCE(phone, ''), 
+			phone_verified,
+			COALESCE(username, ''), 
+			COALESCE(first_name, ''), 
+			COALESCE(last_name, ''), 
+			dob, 
+			COALESCE(avatar_url, ''),
+			COALESCE(bio, ''), 
+			institution_id,
+			who_can_message, 
+			who_can_see_posts, 
+			show_followers_list, 
+			show_following_list,
+			is_active, 
+			onboarding_completed, 
+			onboarded_at,
+			last_login_at, 
+			created_at, 
+			updated_at
 		FROM users 
 		WHERE id = $1 AND is_active = true
 	`

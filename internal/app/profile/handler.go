@@ -61,13 +61,10 @@ func (h *Handler) GetOwnProfile(c *fiber.Ctx) error {
 	// Get profile
 	profile, err := h.service.GetOwnProfile(c.Context(), currentUserID)
 	if err != nil {
-		if err.Error() == "user not found" || err.Error() == "user not found: no rows in result set" {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "user not found",
-			})
-		}
+		// Return actual error for debugging
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get profile",
+			"details": err.Error(),
 		})
 	}
 
