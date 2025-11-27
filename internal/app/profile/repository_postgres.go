@@ -126,7 +126,7 @@ func (r *PostgresProfileRepository) CheckUsernameExists(ctx context.Context, use
 // UpdateAvatar updates the user's avatar URL
 func (r *PostgresProfileRepository) UpdateAvatar(ctx context.Context, userID string, avatarURL string) error {
 	query := `UPDATE users SET avatar_url = $1, updated_at = NOW() WHERE id = $2`
-	
+
 	_, err := r.db.Exec(ctx, query, avatarURL, userID)
 	if err != nil {
 		return fmt.Errorf("failed to update avatar: %w", err)
@@ -137,13 +137,72 @@ func (r *PostgresProfileRepository) UpdateAvatar(ctx context.Context, userID str
 
 // GetPrivacySettings retrieves user's privacy settings
 func (r *PostgresProfileRepository) GetPrivacySettings(ctx context.Context, userID string) (*PrivacySettings, error) {
-	// TODO: Implement in Phase 6
-	return nil, nil
+	query := `
+		SELECT who_can_message, who_can_see_posts, show_followers_list, show_following_list
+		FROM users 
+		WHERE id = $1 AND is_active = true
+	`
+
+	settings := &PrivacySettings{}
+	err := r.db.QueryRow(ctx, query, userID).Scan(
+		&settings.WhoCanMessage,
+		&settings.WhoCanSeePosts,
+		&settings.ShowFollowersList,
+		&settings.ShowFollowingList,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get privacy settings: %w", err)
+	}
+
+	return settings, nil
 }
 
 // UpdatePrivacySettings updates user's privacy settings
 func (r *PostgresProfileRepository) UpdatePrivacySettings(ctx context.Context, userID string, settings *UpdatePrivacyRequest) error {
-	// TODO: Implement in Phase 6
+	// Build dynamic UPDATE query
+	updates := make(map[string]interface{})
+	
+	if settings.WhoCanMessage != "" {
+		updates["who_can_message"] = settings.WhoCanMessage
+	}
+	if settings.WhoCanSeePosts != "" {
+		updates["who_can_see_posts"] = settings.WhoCanSeePosts
+	}
+	if settings.ShowFollowersList != nil {
+		updates["show_followers_list"] = *settings.ShowFollowersList
+	}
+	if settings.ShowFollowingList != nil {
+		updates["show_following_list"] = *settings.ShowFollowingList
+	}
+
+	// If no updates, return without error
+	if len(updates) == 0 {
+		return nil
+	}
+
+	// Use the existing UpdateProfile method logic
+	query := `UPDATE users SET `
+	args := []interface{}{}
+	argPos := 1
+
+	for field, value := range updates {
+		if argPos > 1 {
+			query += ", "
+		}
+		query += fmt.Sprintf("%s = $%d", field, argPos)
+		args = append(args, value)
+		argPos++
+	}
+
+	query += fmt.Sprintf(", updated_at = NOW() WHERE id = $%d", argPos)
+	args = append(args, userID)
+
+	_, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update privacy settings: %w", err)
+	}
+
 	return nil
 }
 

@@ -333,13 +333,48 @@ func (s *profileService) DeleteAvatar(ctx context.Context, userID string) error 
 }
 
 func (s *profileService) GetPrivacySettings(ctx context.Context, userID string) (*PrivacySettings, error) {
-	// TODO: Implement in Phase 6
-	return nil, nil
+	// Get privacy settings from repository
+	settings, err := s.profileRepo.GetPrivacySettings(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get privacy settings: %w", err)
+	}
+
+	return settings, nil
 }
 
 func (s *profileService) UpdatePrivacySettings(ctx context.Context, userID string, req *UpdatePrivacyRequest) (*PrivacySettings, error) {
-	// TODO: Implement in Phase 6
-	return nil, nil
+	// Validate privacy settings
+	if err := s.validatePrivacySettings(req); err != nil {
+		return nil, err
+	}
+
+	// Update privacy settings
+	err := s.profileRepo.UpdatePrivacySettings(ctx, userID, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update privacy settings: %w", err)
+	}
+
+	// Get and return updated settings
+	return s.GetPrivacySettings(ctx, userID)
+}
+
+// validatePrivacySettings validates privacy settings request
+func (s *profileService) validatePrivacySettings(req *UpdatePrivacyRequest) error {
+	// Validate who_can_message
+	if req.WhoCanMessage != "" {
+		if req.WhoCanMessage != "everyone" && req.WhoCanMessage != "followers" && req.WhoCanMessage != "none" {
+			return errors.New("who_can_message must be 'everyone', 'followers', or 'none'")
+		}
+	}
+
+	// Validate who_can_see_posts
+	if req.WhoCanSeePosts != "" {
+		if req.WhoCanSeePosts != "everyone" && req.WhoCanSeePosts != "followers" && req.WhoCanSeePosts != "none" {
+			return errors.New("who_can_see_posts must be 'everyone', 'followers', or 'none'")
+		}
+	}
+
+	return nil
 }
 
 func (s *profileService) GetMutualConnections(ctx context.Context, currentUserID, targetUserID string, page, limit int) (*MutualConnectionsResponse, error) {

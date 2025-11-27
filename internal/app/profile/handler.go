@@ -216,18 +216,60 @@ func (h *Handler) DeleteAvatar(c *fiber.Ctx) error {
 
 // GetPrivacySettings handles GET /v1/users/me/privacy
 func (h *Handler) GetPrivacySettings(c *fiber.Ctx) error {
-	// TODO: Implement in Phase 6
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "not implemented yet",
-	})
+	// Get current user ID from JWT
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	// Get privacy settings
+	settings, err := h.service.GetPrivacySettings(c.Context(), currentUserID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get privacy settings",
+		})
+	}
+
+	return c.JSON(settings)
 }
 
 // UpdatePrivacySettings handles PUT /v1/users/me/privacy
 func (h *Handler) UpdatePrivacySettings(c *fiber.Ctx) error {
-	// TODO: Implement in Phase 6
-	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-		"error": "not implemented yet",
-	})
+	// Get current user ID from JWT
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	// Parse request body
+	var req UpdatePrivacyRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	// Update privacy settings
+	settings, err := h.service.UpdatePrivacySettings(c.Context(), currentUserID, &req)
+	if err != nil {
+		// Handle validation errors
+		errMsg := err.Error()
+		if errMsg == "who_can_message must be 'everyone', 'followers', or 'none'" ||
+			errMsg == "who_can_see_posts must be 'everyone', 'followers', or 'none'" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": errMsg,
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to update privacy settings",
+		})
+	}
+
+	return c.JSON(settings)
 }
 
 // GetMutualConnections handles GET /v1/users/:userId/mutual-connections
