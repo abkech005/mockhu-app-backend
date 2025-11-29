@@ -1,0 +1,607 @@
+{
+	"info": {
+		"_postman_id": "mockhu-messaging-api",
+		"name": "Mockhu Messaging API",
+		"description": "Complete API collection for Mockhu Direct Messaging feature\n\nGenerated: November 29, 2024\nBase URL: http://localhost:8085\n\n**Features:**\n- Conversations (4 endpoints)\n- Messages (3 endpoints)\n- Unread Tracking (3 endpoints)\n- Privacy & Blocking (4 endpoints)\n\n**Total: 14 endpoints**\n\nAll endpoints require JWT authentication.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8085",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "recipient_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "conversation_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "message_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "0. Setup - Login",
+			"item": [
+				{
+					"name": "Login User 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.access_token) {",
+									"        pm.collectionVariables.set(\"access_token\", jsonData.data.access_token);",
+									"        pm.collectionVariables.set(\"user_id\", jsonData.data.user.id);",
+									"        console.log('User 1 logged in: ' + jsonData.data.user.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"student@university.edu\",\n  \"password\": \"SecurePassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "auth", "login"]
+						},
+						"description": "Login to get access token. Update email/password as needed."
+					},
+					"response": []
+				}
+			],
+			"description": "Login to get authentication token before testing messaging APIs."
+		},
+		{
+			"name": "1. Conversations",
+			"item": [
+				{
+					"name": "Create Conversation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.success && jsonData.data) {",
+									"        pm.collectionVariables.set(\"conversation_id\", jsonData.data.id);",
+									"        console.log('Conversation created: ' + jsonData.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"recipient_id\": \"{{recipient_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/conversations",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "conversations"]
+						},
+						"description": "Create a new conversation or get existing one. Set recipient_id variable first."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Conversations List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/conversations?page=1&limit=20&unread_only=false",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "conversations"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "unread_only",
+									"value": "false"
+								}
+							]
+						},
+						"description": "Get all conversations for current user with pagination."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Conversation Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/conversations/{{conversation_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "conversations", "{{conversation_id}}"]
+						},
+						"description": "Get details of a specific conversation."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Conversation",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/conversations/{{conversation_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "conversations", "{{conversation_id}}"]
+						},
+						"description": "Soft delete a conversation."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Messages",
+			"item": [
+				{
+					"name": "Send Text Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.success && jsonData.data) {",
+									"        pm.collectionVariables.set(\"message_id\", jsonData.data.id);",
+									"        console.log('Message sent: ' + jsonData.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message_type\": \"text\",\n  \"content\": \"Hey! How are you doing?\",\n  \"attachments\": []\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/conversations/{{conversation_id}}/messages",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "conversations", "{{conversation_id}}", "messages"]
+						},
+						"description": "Send a text message in a conversation."
+					},
+					"response": []
+				},
+				{
+					"name": "Send Image Message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message_type\": \"image\",\n  \"content\": \"Check out this photo!\",\n  \"attachments\": [\n    {\n      \"id\": \"attachment-uuid-1\",\n      \"type\": \"image\",\n      \"url\": \"/uploads/messages/images/2024/11/image1.jpg\",\n      \"thumbnail_url\": \"/uploads/messages/images/thumbnails/image1.jpg\",\n      \"filename\": \"sunset.jpg\",\n      \"original_filename\": \"IMG_20241129.jpg\",\n      \"size\": 2048576,\n      \"mime_type\": \"image/jpeg\",\n      \"width\": 1920,\n      \"height\": 1080,\n      \"uploaded_at\": \"2024-11-29T10:00:00Z\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/conversations/{{conversation_id}}/messages",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "conversations", "{{conversation_id}}", "messages"]
+						},
+						"description": "Send an image message with attachments."
+					},
+					"response": []
+				},
+				{
+					"name": "Send File Message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message_type\": \"file\",\n  \"content\": \"Here's the assignment PDF\",\n  \"attachments\": [\n    {\n      \"id\": \"attachment-uuid-2\",\n      \"type\": \"file\",\n      \"url\": \"/uploads/messages/files/2024/11/document.pdf\",\n      \"filename\": \"assignment.pdf\",\n      \"original_filename\": \"CS101_Assignment.pdf\",\n      \"size\": 512000,\n      \"mime_type\": \"application/pdf\",\n      \"uploaded_at\": \"2024-11-29T10:00:00Z\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/conversations/{{conversation_id}}/messages",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "conversations", "{{conversation_id}}", "messages"]
+						},
+						"description": "Send a file message with document attachment."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Messages",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/conversations/{{conversation_id}}/messages?page=1&limit=50",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "conversations", "{{conversation_id}}", "messages"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						},
+						"description": "Get all messages in a conversation (paginated)."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/messages/{{message_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "messages", "{{message_id}}"]
+						},
+						"description": "Delete your own message (soft delete)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Unread Tracking",
+			"item": [
+				{
+					"name": "Mark Conversation as Read",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/conversations/{{conversation_id}}/read",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "conversations", "{{conversation_id}}", "read"]
+						},
+						"description": "Mark all messages in a conversation as read."
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Message as Read",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/messages/{{message_id}}/read",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "messages", "{{message_id}}", "read"]
+						},
+						"description": "Mark a single message as read."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Unread Count",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/conversations/unread-count",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "conversations", "unread-count"]
+						},
+						"description": "Get total unread message count and unread conversations count."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Privacy & Blocking",
+			"item": [
+				{
+					"name": "Check Can Message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/users/{{recipient_id}}/can-message",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "users", "{{recipient_id}}", "can-message"]
+						},
+						"description": "Check if you can message another user based on privacy settings and blocking."
+					},
+					"response": []
+				},
+				{
+					"name": "Block User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"reason\": \"Spam messages\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/users/{{recipient_id}}/block",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "users", "{{recipient_id}}", "block"]
+						},
+						"description": "Block a user from messaging you."
+					},
+					"response": []
+				},
+				{
+					"name": "Unblock User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/users/{{recipient_id}}/block",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "users", "{{recipient_id}}", "block"]
+						},
+						"description": "Unblock a previously blocked user."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Blocked Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/users/blocked",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "users", "blocked"]
+						},
+						"description": "Get list of all users you have blocked."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
+

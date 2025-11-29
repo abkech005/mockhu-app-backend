@@ -11,6 +11,7 @@ import (
 	"mockhu-app-backend/internal/app/comment"
 	"mockhu-app-backend/internal/app/follow"
 	"mockhu-app-backend/internal/app/interest"
+	"mockhu-app-backend/internal/app/messaging"
 	"mockhu-app-backend/internal/app/onboarding"
 	"mockhu-app-backend/internal/app/post"
 	"mockhu-app-backend/internal/app/profile"
@@ -105,6 +106,14 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 	profileService := profile.NewService(profileRepo, pg.Pool)
 	profileHandler := profile.NewHandler(profileService)
 
+	// Messaging dependencies
+	convRepo := messaging.NewPostgresConversationRepository(pg.Pool)
+	msgRepo := messaging.NewPostgresMessageRepository(pg.Pool)
+	blockRepo := messaging.NewPostgresBlockRepository(pg.Pool)
+	privacyChecker := messaging.NewPrivacyChecker(authRepo, followRepo, blockRepo)
+	messagingService := messaging.NewService(convRepo, msgRepo, blockRepo, authRepo, privacyChecker)
+	messagingHandler := messaging.NewHandler(messagingService)
+
 	// Register domain routes
 	// Register comment routes BEFORE post routes to avoid route conflicts
 	comment.RegisterRoutes(app, commentHandler)
@@ -116,6 +125,7 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 	follow.RegisterRoutes(app, followHandler)
 	post.RegisterRoutes(app, postHandler)
 	profile.RegisterRoutes(app, profileHandler)
+	messaging.RegisterRoutes(app, messagingHandler)
 
 	return app
 }
