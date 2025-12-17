@@ -63,6 +63,15 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 	}))
 	app.Use(recover.New())
 
+	// Health check endpoint
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status": "ok",
+			"message": "Mockhu API is running",
+			"timestamp": c.Context().Time().Format("2006-01-02 15:04:05"),
+		})
+	})
+
 	// Serve static files (avatars)
 	app.Static("/avatars", "./storage/avatars")
 
