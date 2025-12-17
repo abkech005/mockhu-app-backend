@@ -1,0 +1,67 @@
+name: Deploy to GCP Staging
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    name: Deploy to GCP VM
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Deploy to VM
+        run: |
+          # Add VM to known hosts to avoid SSH prompt
+          gcloud compute ssh mockhu-backend-dev \
+            --zone=us-central1-a \
+            --ssh-flag="-o StrictHostKeyChecking=no" \
+            --command="
+              echo '🚀 Starting deployment...'
+              cd /opt/mockhu
+              echo '📥 Pulling latest code...'
+              git pull origin develop
+              echo '🔨 Building application...'
+              /usr/local/go/bin/go build -o mockhu-api cmd/api/main.go
+              echo '🔄 Restarting service...'
+              sudo systemctl restart mockhu
+              echo '✅ Deployment complete!'
+              echo '📊 Service status:'
+              sudo systemctl status mockhu --no-pager
+            "
+
+      - name: Verify Deployment
+        run: |
+          echo "Waiting 10 seconds for service to start..."
+          sleep 10
+          RESPONSE=$(curl -s http://104.198.232.235/health || echo "FAILED")
+          if [[ "$RESPONSE" == *"ok"* ]]; then
+            echo "✅ Health check passed!"
+            echo "$RESPONSE"
+          else
+            echo "❌ Health check failed!"
+            echo "$RESPONSE"
+            exit 1
+          fi
+
+      - name: Notify on Success
+        if: success()
+        run: |
+          echo "🎉 Deployment to staging successful!"
+          echo "🌐 Staging URL: http://104.198.232.235"
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed! Check the logs above."
