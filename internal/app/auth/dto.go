@@ -149,3 +149,13 @@ type OAuthLinkResponse struct {
 	Provider      string `json:"provider"`
 	ProviderEmail string `json:"provider_email"`
 }
+
+// POST /v1/auth/check-email
+type CheckEmailRequest struct {
+	Email string `json:"email" binding:"required"`
+}
+
+type CheckEmailResponse struct {
+	Available bool   `json:"available"`
+	Message   string `json:"message"`
+}

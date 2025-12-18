@@ -297,3 +297,26 @@ func (h *Handler) VerifyPhone(c *fiber.Ctx) error {
 		PhoneVerified: true,
 	})
 }
+
+// CheckEmail checks if an email address is available for registration.
+func (h *Handler) CheckEmail(c *fiber.Ctx) error {
+	email := c.Query("email")
+
+	if email == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "email query parameter is required",
+		})
+	}
+
+	available, _ := h.service.CheckEmailAvailability(c.Context(), email)
+
+	message := "Email is available"
+	if !available {
+		message = "Email is already registered"
+	}
+
+	return c.JSON(CheckEmailResponse{
+		Available: available,
+		Message:   message,
+	})
+}

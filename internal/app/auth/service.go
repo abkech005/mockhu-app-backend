@@ -202,6 +202,20 @@ func (s *Service) GetUserByEmail(ctx context.Context, email string) (*User, erro
 	return s.repo.FindByEmail(ctx, email)
 }
 
+// CheckEmailAvailability checks if an email address is available for registration.
+// Returns true if the email is not registered, false otherwise.
+func (s *Service) CheckEmailAvailability(ctx context.Context, email string) (bool, error) {
+	existing, err := s.repo.FindByEmail(ctx, email)
+	if err != nil {
+		// If error is "not found", email is available
+		return true, nil
+	}
+	if existing != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
 // VerifyEmail marks a user's email as verified.
 // This is typically called after the user clicks a verification link.
 // Returns an error if the user doesn't exist or the operation fails.
