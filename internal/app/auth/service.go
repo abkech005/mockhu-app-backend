@@ -220,6 +220,20 @@ func (s *Service) CheckEmailAvailability(ctx context.Context, email string) (boo
 	return true, nil
 }
 
+// CheckUsernameAvailability checks if a username is available for registration.
+// Returns true if the username is not taken, false otherwise.
+func (s *Service) CheckUsernameAvailability(ctx context.Context, username string) (bool, error) {
+	existing, err := s.repo.FindByUsername(ctx, username)
+	if err != nil {
+		// If error is "not found", username is available
+		return true, nil
+	}
+	if existing != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
 // VerifyEmail marks a user's email as verified.
 // This is typically called after the user clicks a verification link.
 // Returns an error if the user doesn't exist or the operation fails.

@@ -354,3 +354,26 @@ func (h *Handler) CheckEmail(c *fiber.Ctx) error {
 		Message:   message,
 	})
 }
+
+// CheckUsername checks if a username is available for registration.
+func (h *Handler) CheckUsername(c *fiber.Ctx) error {
+	username := c.Query("username")
+
+	if username == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "username query parameter is required",
+		})
+	}
+
+	available, _ := h.service.CheckUsernameAvailability(c.Context(), username)
+
+	message := "Username is available"
+	if !available {
+		message = "Username is already taken"
+	}
+
+	return c.JSON(CheckUsernameResponse{
+		Available: available,
+		Message:   message,
+	})
+}

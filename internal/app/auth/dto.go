@@ -164,3 +164,13 @@ type CheckEmailResponse struct {
 	Available bool   `json:"available"`
 	Message   string `json:"message"`
 }
+
+// GET /v1/auth/check-username
+type CheckUsernameRequest struct {
+	Username string `json:"username" binding:"required"`
+}
+
+type CheckUsernameResponse struct {
+	Available bool   `json:"available"`
+	Message   string `json:"message"`
+}
