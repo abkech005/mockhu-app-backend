@@ -2,6 +2,7 @@ package auth
 
 import (
 	"mockhu-app-backend/internal/pkg/jwt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -35,29 +36,62 @@ func (h *Handler) Signup(c *fiber.Ctx) error {
 		})
 	}
 
+	// Parse DOB if provided
+	var dob time.Time
+	if req.DOB != "" {
+		parsed, err := time.Parse("2006-01-02", req.DOB)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid date format, use YYYY-MM-DD",
+			})
+		}
+		dob = parsed
+	}
+
 	// Create user and auto-send verification
-	result, err := h.service.Signup(c.Context(), req.Method, req.Email, req.Phone, req.Password)
+	result, err := h.service.Signup(c.Context(), req.Method, req.Email, req.Phone, req.Password, req.FirstName, req.LastName, req.MiddleName, dob)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	response := SignupResponse{
-		UserID:              result.User.ID,
-		VerificationNeeded:  result.NeedsVerification,
-		VerificationChannel: req.Method,
+	// Generate JWT tokens for auto-login
+	accessToken, err := jwt.GenerateAccessToken(result.User.ID, result.User.Email, result.User.Username)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to generate access token",
+		})
 	}
 
-	// Include verification code in response for testing (remove in production)
-	if result.VerificationCode != nil {
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"user_id":              response.UserID,
-			"verification_needed":  response.VerificationNeeded,
-			"verification_channel": response.VerificationChannel,
-			"verification_code":    result.VerificationCode.Code, // TODO: Remove in production
-			"verification_expires": 600,                          // 10 minutes
+	refreshToken, err := jwt.GenerateRefreshToken(result.User.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to generate refresh token",
 		})
+	}
+
+	// Build response with tokens and user data
+	response := fiber.Map{
+		"user_id":              result.User.ID,
+		"verification_needed":  result.NeedsVerification,
+		"verification_channel": req.Method,
+		"access_token":         accessToken,
+		"refresh_token":        refreshToken,
+		"expires_in":           int(jwt.AccessTokenDuration.Seconds()),
+		"user": fiber.Map{
+			"id":         result.User.ID,
+			"email":      result.User.Email,
+			"first_name": result.User.FirstName,
+			"last_name":  result.User.LastName,
+			"username":   result.User.Username,
+		},
+	}
+
+	// Include verification code for testing (remove in production)
+	if result.VerificationCode != nil {
+		response["verification_code"] = result.VerificationCode.Code
+		response["verification_expires"] = 600
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(response)

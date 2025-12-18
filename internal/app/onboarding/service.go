@@ -26,7 +26,7 @@ func NewService(userRepo auth.UserRepository, interestRepo interest.InterestRepo
 }
 
 // CompleteOnboarding handles the entire onboarding process
-// Validates user, checks verification, updates profile, and marks onboarding complete
+// Validates user, updates profile, and marks onboarding complete
 func (s *Service) CompleteOnboarding(ctx context.Context, req *CompleteOnboardingRequest) (*CompleteOnboardingResponse, error) {
 	// 1. Get user by ID
 	user, err := s.userRepo.FindByID(ctx, req.UserID)
@@ -34,12 +34,7 @@ func (s *Service) CompleteOnboarding(ctx context.Context, req *CompleteOnboardin
 		return nil, errors.New("user not found")
 	}
 
-	// 2. Check if email or phone is verified
-	if !user.EmailVerified && !user.PhoneVerified {
-		return nil, errors.New("please verify your email or phone before onboarding")
-	}
-
-	// 3. Check if username is already taken (if different from current)
+	// 2. Check if username is already taken (if different from current)
 	if req.Username != user.Username && req.Username != "" {
 		existingUser, _ := s.userRepo.FindByUsername(ctx, req.Username)
 		if existingUser != nil && existingUser.ID != user.ID {
@@ -47,74 +42,32 @@ func (s *Service) CompleteOnboarding(ctx context.Context, req *CompleteOnboardin
 		}
 	}
 
-	// 4. Parse DOB (format: YYYY-MM-DD)
-	dob, err := time.Parse("2006-01-02", req.DOB)
-	if err != nil {
-		return nil, errors.New("invalid date format, use YYYY-MM-DD")
-	}
-
-	// 5. Validate age (must be 13+)
-	age := time.Now().Year() - dob.Year()
-	if age < 13 {
-		return nil, errors.New("you must be at least 13 years old")
-	}
-	if age > 120 {
-		return nil, errors.New("invalid date of birth")
-	}
-
-	// 6. Update user profile
-	user.FirstName = req.FirstName
-	user.LastName = req.LastName
+	// 4. Update user profile
 	user.Username = req.Username
-	user.DOB = dob
 	if req.AvatarURL != "" {
 		user.AvatarURL = req.AvatarURL
 	}
+	user.Bio = req.Bio
+	user.Place = req.Place
 	user.UpdatedAt = time.Now()
 
-	// 7. Mark onboarding as complete
+	// 5. Mark onboarding as complete
 	now := time.Now()
 	user.OnboardingCompleted = true
 	user.OnboardedAt = &now
 
-	// 8. Save user to database
+	// 6. Save user to database
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		return nil, fmt.Errorf("failed to update profile: %w", err)
 	}
 
-	// 9. Save interests (if provided)
-	interestsCount := 0
-	if len(req.Interests) > 0 {
-		// Find interests by slugs
-		interests, err := s.interestRepo.FindBySlugs(ctx, req.Interests)
-		if err != nil {
-			log.Printf("⚠️ Failed to find interests: %v", err)
-			// Don't fail onboarding if interests fail
-		} else if len(interests) > 0 {
-			// Extract interest IDs
-			interestIDs := make([]string, len(interests))
-			for i, interest := range interests {
-				interestIDs[i] = interest.ID
-			}
+	log.Printf("✅ Onboarding completed for user %s", user.ID)
 
-			// Save user interests
-			if err := s.interestRepo.AddUserInterests(ctx, user.ID, interestIDs); err != nil {
-				log.Printf("⚠️ Failed to save user interests: %v", err)
-				// Don't fail onboarding if interests fail
-			} else {
-				interestsCount = len(interests)
-				log.Printf("✅ Saved %d interests for user %s", interestsCount, user.ID)
-			}
-		}
-	}
-
-	// 10. Return success response
+	// 7. Return success response
 	return &CompleteOnboardingResponse{
 		Success:             true,
 		Message:             "onboarding completed successfully",
 		UserID:              user.ID,
-		ProfileCompleted:    true,
-		InterestsCount:      interestsCount,
 		OnboardingCompleted: true,
 		OnboardedAt:         now,
 	}, nil

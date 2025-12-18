@@ -10,6 +10,11 @@ type SignupRequest struct {
 	CountryCode string `json:"country_code,omitempty"`
 	Password    string `json:"password,omitempty"`
 	SocialToken string `json:"social_token,omitempty"`
+	// Profile fields
+	FirstName  string `json:"first_name,omitempty"`
+	LastName   string `json:"last_name,omitempty"`
+	MiddleName string `json:"middle_name,omitempty"`
+	DOB        string `json:"dob,omitempty"` // Format: YYYY-MM-DD
 }
 
 type SignupResponse struct {

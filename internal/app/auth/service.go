@@ -52,7 +52,7 @@ type SignupResult struct {
 //   - Automatically sends verification code based on signup method
 //
 // Returns the created user, verification code (if applicable), or an error if the operation fails.
-func (s *Service) Signup(ctx context.Context, method, email, phone, password string) (*SignupResult, error) {
+func (s *Service) Signup(ctx context.Context, method, email, phone, password, firstName, lastName, middleName string, dob time.Time) (*SignupResult, error) {
 	// Validate based on method
 	if method == "email" && email == "" {
 		return nil, errors.New("email is required for email signup")
@@ -91,6 +91,10 @@ func (s *Service) Signup(ctx context.Context, method, email, phone, password str
 		Email:        email,
 		Phone:        phone,
 		PasswordHash: hashedPassword,
+		FirstName:    firstName,
+		LastName:     lastName,
+		MiddleName:   middleName,
+		DOB:          dob,
 		IsActive:     true,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
