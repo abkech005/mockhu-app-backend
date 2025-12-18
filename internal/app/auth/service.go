@@ -19,14 +19,18 @@ import (
 type Service struct {
 	repo             UserRepository
 	verificationRepo VerificationRepository
+	oauthRepo        OAuthRepository
+	providers        map[string]OAuthProvider
 }
 
 // NewService creates a new authentication service instance.
 // It requires a UserRepository and VerificationRepository to interact with the database.
-func NewService(repo UserRepository, verificationRepo VerificationRepository) *Service {
+func NewService(repo UserRepository, verificationRepo VerificationRepository, oauthRepo OAuthRepository, providers map[string]OAuthProvider) *Service {
 	return &Service{
 		repo:             repo,
 		verificationRepo: verificationRepo,
+		oauthRepo:        oauthRepo,
+		providers:        providers,
 	}
 }
 

@@ -22,9 +22,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠️  No .env file found or error loading it (using system env vars)")
+	}
+
 	// Connect to database
 	ctx := context.Background()
 	pg, err := dbinfra.New(ctx, dbinfra.DatabaseURLFromEnv())
@@ -78,7 +84,38 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 	// Build dependency layers: Repository -> Service -> Handler
 	authRepo := auth.NewPostgresUserRepository(pg.Pool)
 	verificationRepo := auth.NewPostgresVerificationRepository(pg.Pool)
-	authService := auth.NewService(authRepo, verificationRepo)
+	oauthRepo := auth.NewPostgresOAuthRepository(pg.Pool)
+
+	// Initialize OAuth Providers
+	providers := make(map[string]auth.OAuthProvider)
+
+	if clientID := os.Getenv("GOOGLE_CLIENT_ID"); clientID != "" {
+		providers["google"] = auth.NewGoogleOAuthProvider(
+			clientID,
+			os.Getenv("GOOGLE_CLIENT_SECRET"),
+			os.Getenv("GOOGLE_REDIRECT_URL"),
+		)
+	}
+
+	if clientID := os.Getenv("FACEBOOK_CLIENT_ID"); clientID != "" {
+		providers["facebook"] = auth.NewFacebookOAuthProvider(
+			clientID,
+			os.Getenv("FACEBOOK_CLIENT_SECRET"),
+			os.Getenv("FACEBOOK_REDIRECT_URL"),
+		)
+	}
+
+	if clientID := os.Getenv("APPLE_CLIENT_ID"); clientID != "" {
+		providers["apple"] = auth.NewAppleOAuthProvider(
+			clientID,
+			os.Getenv("APPLE_TEAM_ID"),
+			os.Getenv("APPLE_KEY_ID"),
+			os.Getenv("APPLE_PRIVATE_KEY"),
+			os.Getenv("APPLE_REDIRECT_URL"),
+		)
+	}
+
+	authService := auth.NewService(authRepo, verificationRepo, oauthRepo, providers)
 	authHandler := auth.NewHandler(authService)
 
 	// Interest dependencies

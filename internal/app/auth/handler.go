@@ -8,6 +8,7 @@ import (
 
 // Handler handles HTTP requests for authentication endpoints.
 // It uses the Service layer to perform business operations.
+// Note: OAuth handlers are in oauth_handler.go
 type Handler struct {
 	service *Service
 }

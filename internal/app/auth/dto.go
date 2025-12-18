@@ -123,8 +123,29 @@ type VerifyPhoneRequest struct {
 	UserID string `json:"user_id" binding:"required"`
 	Code   string `json:"code" binding:"required"`
 }
-
 type VerifyPhoneResponse struct {
 	Message       string `json:"message"`
 	PhoneVerified bool   `json:"phone_verified"`
+}
+
+// OAuth DTOs
+
+// GET /v1/auth/oauth/:provider/callback
+type OAuthCallbackResponse struct {
+	AccessToken  string    `json:"access_token"`
+	RefreshToken string    `json:"refresh_token"`
+	ExpiresIn    int       `json:"expires_in"`
+	IsNewUser    bool      `json:"is_new_user"`
+	User         *UserInfo `json:"user"`
+}
+
+// POST /v1/auth/oauth/:provider/link
+type OAuthLinkRequest struct {
+	Code string `json:"code" binding:"required"`
+}
+
+type OAuthLinkResponse struct {
+	Message       string `json:"message"`
+	Provider      string `json:"provider"`
+	ProviderEmail string `json:"provider_email"`
 }
