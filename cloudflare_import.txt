@@ -1,0 +1,4 @@
+ov47zylugeynxlcr6vdulm6zkvnx7gea._domainkey IN CNAME ov47zylugeynxlcr6vdulm6zkvnx7gea.dkim.amazonses.com.
+bw6sc5lanw46vzn6zu7suj2tb5x444vx._domainkey IN CNAME bw6sc5lanw46vzn6zu7suj2tb5x444vx.dkim.amazonses.com.
+uk67af6cycght253pbjx7nqjbom5cjto._domainkey IN CNAME uk67af6cycght253pbjx7nqjbom5cjto.dkim.amazonses.com.
+_dmarc IN TXT "v=DMARC1; p=none;"

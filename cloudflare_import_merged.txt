@@ -1,0 +1,30 @@
+;;
+;; Domain:     mockhu.com.
+;; Exported:   2025-12-18 02:43:47
+;;
+;; Use at your own risk.
+;; SOA Record
+mockhu.com.	3600	IN	SOA	jimmy.ns.cloudflare.com. dns.cloudflare.com. 2051769242 10000 2400 604800 3600
+
+;; NS Records
+mockhu.com.	86400	IN	NS	jimmy.ns.cloudflare.com.
+mockhu.com.	86400	IN	NS	macy.ns.cloudflare.com.
+
+;; CNAME Records (Existing)
+mockhu.com.	1	IN	CNAME	mockhu-app-webclient.pages.dev.
+www.mockhu.com.	1	IN	CNAME	mockhu-app-webclient.pages.dev.
+
+;; NEW AWS SES CNAME Records
+ov47zylugeynxlcr6vdulm6zkvnx7gea._domainkey.mockhu.com. 1 IN CNAME ov47zylugeynxlcr6vdulm6zkvnx7gea.dkim.amazonses.com.
+bw6sc5lanw46vzn6zu7suj2tb5x444vx._domainkey.mockhu.com. 1 IN CNAME bw6sc5lanw46vzn6zu7suj2tb5x444vx.dkim.amazonses.com.
+uk67af6cycght253pbjx7nqjbom5cjto._domainkey.mockhu.com. 1 IN CNAME uk67af6cycght253pbjx7nqjbom5cjto.dkim.amazonses.com.
+
+;; TXT Records
+;; Combined SPF (Mailgun + AWS SES requires review, usually just include amazonses.com if needed, but for now keeping existing)
+mockhu.com.	1	IN	TXT	"v=spf1 include:mailgun.org include:amazonses.com ~all"
+
+;; DMARC (Note: You already have one for 'quarantine', AWS suggested 'none'. Keeping yours is safer if you know what you are doing, but I will comment out the AWS one to avoid conflict)
+_dmarc.mockhu.com.	1	IN	TXT	"v=DMARC1; p=quarantine; adkim=r; aspf=r; rua=mailto:dmarc_rua@onsecureserver.net;"
+
+;; Previous DKIM
+k1._domainkey.mockhu.com.	1	IN	TXT	"k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDnuJheyaHuDg9CUgLw0aywCgg6vm5VERVvdA/N76hrPz/4goURUAZs00CcxJ4yPjspBn0gMkH+HToFD85WywWFIl8mRHv//jRIWUzLaejEiaA4p2slJOf4/dwHT/6IjDo6Le/Exv26uoeBepg2hbOm6wXSkdc2w2mMIbhrRb7yRQIDAQAB"

@@ -18,6 +18,7 @@ import (
 	"mockhu-app-backend/internal/app/share"
 	"mockhu-app-backend/internal/app/upload"
 	dbinfra "mockhu-app-backend/internal/infra/db"
+	"mockhu-app-backend/internal/infra/email"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -115,7 +116,24 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 		)
 	}
 
-	authService := auth.NewService(authRepo, verificationRepo, oauthRepo, providers)
+	// Initialize Email Service (SES)
+	var emailService auth.EmailService
+	sesSender := os.Getenv("SES_SENDER_EMAIL")
+	awsRegion := os.Getenv("AWS_REGION")
+
+	if sesSender != "" && awsRegion != "" {
+		es, err := email.NewSESEmailService(context.Background(), awsRegion, sesSender)
+		if err != nil {
+			log.Printf("⚠️ Failed to initialize SES: %v", err)
+		} else {
+			emailService = es
+			log.Println("✅ SES Email Service initialized")
+		}
+	} else {
+		log.Println("⚠️ SES not configured (SES_SENDER_EMAIL or AWS_REGION missing)")
+	}
+
+	authService := auth.NewService(authRepo, verificationRepo, oauthRepo, emailService, providers)
 	authHandler := auth.NewHandler(authService)
 
 	// Interest dependencies
