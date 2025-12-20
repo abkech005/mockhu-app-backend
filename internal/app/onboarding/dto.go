@@ -15,6 +15,10 @@ type CompleteOnboardingResponse struct {
 	Success             bool      `json:"success"`
 	Message             string    `json:"message"`
 	UserID              string    `json:"user_id"`
+	Username            string    `json:"username"`
+	AccessToken         string    `json:"access_token"`
+	RefreshToken        string    `json:"refresh_token"`
+	ExpiresIn           int       `json:"expires_in"`
 	OnboardingCompleted bool      `json:"onboarding_completed"`
 	OnboardedAt         time.Time `json:"onboarded_at"`
 }

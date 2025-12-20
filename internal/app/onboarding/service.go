@@ -9,6 +9,7 @@ import (
 
 	"mockhu-app-backend/internal/app/auth"
 	"mockhu-app-backend/internal/app/interest"
+	"mockhu-app-backend/internal/pkg/jwt"
 )
 
 // Service handles onboarding business logic
@@ -63,11 +64,26 @@ func (s *Service) CompleteOnboarding(ctx context.Context, req *CompleteOnboardin
 
 	log.Printf("✅ Onboarding completed for user %s", user.ID)
 
-	// 7. Return success response
+	// 7. Generate new JWT tokens with updated username
+	accessToken, err := jwt.GenerateAccessToken(user.ID, user.Email, user.Username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	refreshToken, err := jwt.GenerateRefreshToken(user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+
+	// 8. Return success response with new tokens
 	return &CompleteOnboardingResponse{
 		Success:             true,
 		Message:             "onboarding completed successfully",
 		UserID:              user.ID,
+		Username:            user.Username,
+		AccessToken:         accessToken,
+		RefreshToken:        refreshToken,
+		ExpiresIn:           int(jwt.AccessTokenDuration.Seconds()),
 		OnboardingCompleted: true,
 		OnboardedAt:         now,
 	}, nil
