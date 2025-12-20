@@ -81,6 +81,7 @@ func (s *Service) CompleteOnboarding(ctx context.Context, req *CompleteOnboardin
 		Message:             "onboarding completed successfully",
 		UserID:              user.ID,
 		Username:            user.Username,
+		AvatarURL:           user.AvatarURL,
 		AccessToken:         accessToken,
 		RefreshToken:        refreshToken,
 		ExpiresIn:           int(jwt.AccessTokenDuration.Seconds()),

@@ -16,6 +16,7 @@ type CompleteOnboardingResponse struct {
 	Message             string    `json:"message"`
 	UserID              string    `json:"user_id"`
 	Username            string    `json:"username"`
+	AvatarURL           string    `json:"avatar_url"`
 	AccessToken         string    `json:"access_token"`
 	RefreshToken        string    `json:"refresh_token"`
 	ExpiresIn           int       `json:"expires_in"`
