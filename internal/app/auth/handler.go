@@ -85,6 +85,7 @@ func (h *Handler) Signup(c *fiber.Ctx) error {
 			"first_name": result.User.FirstName,
 			"last_name":  result.User.LastName,
 			"username":   result.User.Username,
+			"avatar_url": result.User.AvatarURL,
 		},
 	}
 
@@ -158,6 +159,8 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		ExpiresIn:    int(jwt.AccessTokenDuration.Seconds()),
+		Username:     user.Username,
+		AvatarURL:    user.AvatarURL,
 	})
 }
 

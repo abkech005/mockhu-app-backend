@@ -20,6 +20,7 @@ import (
 	"mockhu-app-backend/internal/app/upload"
 	dbinfra "mockhu-app-backend/internal/infra/db"
 	"mockhu-app-backend/internal/infra/email"
+	"mockhu-app-backend/internal/infra/r2"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -42,7 +43,15 @@ func main() {
 	defer pg.Close()
 	log.Println("✅ Database connected")
 
-	app := setupRouter(pg)
+	// Initialize R2 storage client
+	r2Client, err := r2.NewClient(ctx)
+	if err != nil {
+		log.Printf("⚠️ R2 storage not configured: %v", err)
+	} else {
+		log.Println("✅ R2 storage connected")
+	}
+
+	app := setupRouter(pg, r2Client)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -58,7 +67,7 @@ func main() {
 	}
 }
 
-func setupRouter(pg *dbinfra.Postgres) *fiber.App {
+func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName: "Mockhu API",
 	})
@@ -191,7 +200,9 @@ func setupRouter(pg *dbinfra.Postgres) *fiber.App {
 	auth.RegisterRoutes(app, authHandler)
 	interest.RegisterRoutes(app, interestHandler)
 	onboarding.RegisterRoutes(app, onboardingHandler)
-	upload.RegisterRoutes(app)
+	if r2Client != nil {
+		upload.RegisterRoutes(app, r2Client, authRepo)
+	}
 	follow.RegisterRoutes(app, followHandler)
 	post.RegisterRoutes(app, postHandler)
 	profile.RegisterRoutes(app, profileHandler)

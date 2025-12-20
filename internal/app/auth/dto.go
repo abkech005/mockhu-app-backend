@@ -47,6 +47,8 @@ type LoginResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int    `json:"expires_in"`
+	Username     string `json:"username"`
+	AvatarURL    string `json:"avatar_url"`
 }
 
 // POST /v1/auth/refresh
