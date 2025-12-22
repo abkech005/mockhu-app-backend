@@ -1,0 +1,48 @@
+{
+    "info": {
+        "_postman_id": "suggestions-service-collection",
+        "name": "Suggestions Service",
+        "description": "Collection for User Suggestions endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Get User Suggestions",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/suggestions/users?user_id=e4a02b15-aa17-4f8c-a9d1-0a47089e9f0d&limit=10",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "suggestions",
+                        "users"
+                    ],
+                    "query": [
+                        {
+                            "key": "user_id",
+                            "value": "e4a02b15-aa17-4f8c-a9d1-0a47089e9f0d",
+                            "description": "User ID to get suggestions for"
+                        },
+                        {
+                            "key": "limit",
+                            "value": "10",
+                            "description": "Max number of suggestions (default: 10)"
+                        }
+                    ]
+                },
+                "description": "Get suggested users to follow based on shared interests"
+            },
+            "response": []
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8085/v1",
+            "type": "string"
+        }
+    ]
+}

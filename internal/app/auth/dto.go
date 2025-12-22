@@ -10,6 +10,11 @@ type SignupRequest struct {
 	CountryCode string `json:"country_code,omitempty"`
 	Password    string `json:"password,omitempty"`
 	SocialToken string `json:"social_token,omitempty"`
+	// Profile fields
+	FirstName  string `json:"first_name,omitempty"`
+	LastName   string `json:"last_name,omitempty"`
+	MiddleName string `json:"middle_name,omitempty"`
+	DOB        string `json:"dob,omitempty"` // Format: YYYY-MM-DD
 }
 
 type SignupResponse struct {
@@ -42,6 +47,8 @@ type LoginResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int    `json:"expires_in"`
+	Username     string `json:"username"`
+	AvatarURL    string `json:"avatar_url"`
 }
 
 // POST /v1/auth/refresh
@@ -123,8 +130,49 @@ type VerifyPhoneRequest struct {
 	UserID string `json:"user_id" binding:"required"`
 	Code   string `json:"code" binding:"required"`
 }
-
 type VerifyPhoneResponse struct {
 	Message       string `json:"message"`
 	PhoneVerified bool   `json:"phone_verified"`
+}
+
+// OAuth DTOs
+
+// GET /v1/auth/oauth/:provider/callback
+type OAuthCallbackResponse struct {
+	AccessToken  string    `json:"access_token"`
+	RefreshToken string    `json:"refresh_token"`
+	ExpiresIn    int       `json:"expires_in"`
+	IsNewUser    bool      `json:"is_new_user"`
+	User         *UserInfo `json:"user"`
+}
+
+// POST /v1/auth/oauth/:provider/link
+type OAuthLinkRequest struct {
+	Code string `json:"code" binding:"required"`
+}
+
+type OAuthLinkResponse struct {
+	Message       string `json:"message"`
+	Provider      string `json:"provider"`
+	ProviderEmail string `json:"provider_email"`
+}
+
+// POST /v1/auth/check-email
+type CheckEmailRequest struct {
+	Email string `json:"email" binding:"required"`
+}
+
+type CheckEmailResponse struct {
+	Available bool   `json:"available"`
+	Message   string `json:"message"`
+}
+
+// GET /v1/auth/check-username
+type CheckUsernameRequest struct {
+	Username string `json:"username" binding:"required"`
+}
+
+type CheckUsernameResponse struct {
+	Available bool   `json:"available"`
+	Message   string `json:"message"`
 }

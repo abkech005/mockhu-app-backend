@@ -1,0 +1,4 @@
+ov47zylugeynxlcr6vdulm6zkvnx7gea._domainkey.mockhu.com. IN CNAME ov47zylugeynxlcr6vdulm6zkvnx7gea.dkim.amazonses.com.
+bw6sc5lanw46vzn6zu7suj2tb5x444vx._domainkey.mockhu.com. IN CNAME bw6sc5lanw46vzn6zu7suj2tb5x444vx.dkim.amazonses.com.
+uk67af6cycght253pbjx7nqjbom5cjto._domainkey.mockhu.com. IN CNAME uk67af6cycght253pbjx7nqjbom5cjto.dkim.amazonses.com.
+mockhu.com. IN TXT "v=spf1 include:mailgun.org include:amazonses.com ~all"

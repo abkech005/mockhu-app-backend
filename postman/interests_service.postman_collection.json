@@ -1,0 +1,250 @@
+{
+    "info": {
+        "_postman_id": "interests-service-collection",
+        "name": "Interests Service",
+        "description": "Collection for Interests Service endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Interest Management",
+            "item": [
+                {
+                    "name": "Get All Interests",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/interests/",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "interests",
+                                ""
+                            ]
+                        },
+                        "description": "List all interests. Optional filter: ?category=tech"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Interests (by Category)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/interests/?category=tech",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "interests",
+                                ""
+                            ],
+                            "query": [
+                                {
+                                    "key": "category",
+                                    "value": "tech"
+                                }
+                            ]
+                        },
+                        "description": "List interests filtered by category"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/interests/categories",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "interests",
+                                "categories"
+                            ]
+                        },
+                        "description": "List all categories with interest counts"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Interest (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Machine Learning\",\n    \"slug\": \"machine-learning\",\n    \"category\": \"tech\",\n    \"icon\": \"🤖\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/interests/",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "interests",
+                                ""
+                            ]
+                        },
+                        "description": "Create a new interest (admin only)"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "User Interests",
+            "item": [
+                {
+                    "name": "Get User Interests",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:id/interests",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":id",
+                                "interests"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "e4a02b15-aa17-4f8c-a9d1-0a47089e9f0d",
+                                    "description": "User ID"
+                                }
+                            ]
+                        },
+                        "description": "Get all interests for a user"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add User Interests",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"interest_slugs\": [\"javascript\", \"python\", \"machine-learning\"]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:id/interests",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":id",
+                                "interests"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "e4a02b15-aa17-4f8c-a9d1-0a47089e9f0d",
+                                    "description": "User ID"
+                                }
+                            ]
+                        },
+                        "description": "Add interests to user (appends to existing)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Replace User Interests",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"interest_slugs\": [\"react\", \"nodejs\", \"typescript\"]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:id/interests",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":id",
+                                "interests"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "e4a02b15-aa17-4f8c-a9d1-0a47089e9f0d",
+                                    "description": "User ID"
+                                }
+                            ]
+                        },
+                        "description": "Replace all user interests (removes old, adds new)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Remove User Interest",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/users/:id/interests/:slug",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "users",
+                                ":id",
+                                "interests",
+                                ":slug"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "e4a02b15-aa17-4f8c-a9d1-0a47089e9f0d",
+                                    "description": "User ID"
+                                },
+                                {
+                                    "key": "slug",
+                                    "value": "javascript",
+                                    "description": "Interest slug to remove"
+                                }
+                            ]
+                        },
+                        "description": "Remove a single interest from user"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8085/v1",
+            "type": "string"
+        }
+    ]
+}

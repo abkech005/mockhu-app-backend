@@ -19,14 +19,20 @@ import (
 type Service struct {
 	repo             UserRepository
 	verificationRepo VerificationRepository
+	oauthRepo        OAuthRepository
+	emailService     EmailService
+	providers        map[string]OAuthProvider
 }
 
 // NewService creates a new authentication service instance.
 // It requires a UserRepository and VerificationRepository to interact with the database.
-func NewService(repo UserRepository, verificationRepo VerificationRepository) *Service {
+func NewService(repo UserRepository, verificationRepo VerificationRepository, oauthRepo OAuthRepository, emailService EmailService, providers map[string]OAuthProvider) *Service {
 	return &Service{
 		repo:             repo,
 		verificationRepo: verificationRepo,
+		oauthRepo:        oauthRepo,
+		emailService:     emailService,
+		providers:        providers,
 	}
 }
 
@@ -46,7 +52,7 @@ type SignupResult struct {
 //   - Automatically sends verification code based on signup method
 //
 // Returns the created user, verification code (if applicable), or an error if the operation fails.
-func (s *Service) Signup(ctx context.Context, method, email, phone, password string) (*SignupResult, error) {
+func (s *Service) Signup(ctx context.Context, method, email, phone, password, firstName, lastName, middleName string, dob time.Time) (*SignupResult, error) {
 	// Validate based on method
 	if method == "email" && email == "" {
 		return nil, errors.New("email is required for email signup")
@@ -85,6 +91,10 @@ func (s *Service) Signup(ctx context.Context, method, email, phone, password str
 		Email:        email,
 		Phone:        phone,
 		PasswordHash: hashedPassword,
+		FirstName:    firstName,
+		LastName:     lastName,
+		MiddleName:   middleName,
+		DOB:          dob,
 		IsActive:     true,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -131,9 +141,9 @@ func (s *Service) Signup(ctx context.Context, method, email, phone, password str
 	return result, nil
 }
 
-// Login authenticates a user with their email/phone and password.
+// Login authenticates a user with their email or username and password.
 // It performs the following validations:
-//   - Checks if the user exists (by email or phone)
+//   - Checks if the user exists (by email or username)
 //   - Verifies the account is active
 //   - Validates the password against the stored hash
 //   - Updates the last login timestamp
@@ -144,22 +154,11 @@ func (s *Service) Login(ctx context.Context, identifier, password string) (*User
 	var err error
 
 	// Try to find user by email first (if identifier contains @)
-	// Otherwise try by phone
 	if strings.Contains(identifier, "@") {
 		user, err = s.repo.FindByEmail(ctx, identifier)
 	} else {
-		user, err = s.repo.FindByPhone(ctx, identifier)
-	}
-
-	// If not found by email/phone, try the other method
-	if err != nil || user == nil {
-		if strings.Contains(identifier, "@") {
-			// Already tried email, try phone
-			user, err = s.repo.FindByPhone(ctx, identifier)
-		} else {
-			// Already tried phone, try email
-			user, err = s.repo.FindByEmail(ctx, identifier)
-		}
+		// Otherwise try by username
+		user, err = s.repo.FindByUsername(ctx, identifier)
 	}
 
 	// If still not found, return invalid credentials
@@ -194,6 +193,34 @@ func (s *Service) GetUserByID(ctx context.Context, id string) (*User, error) {
 // Returns the user if found, or an error if the user doesn't exist.
 func (s *Service) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	return s.repo.FindByEmail(ctx, email)
+}
+
+// CheckEmailAvailability checks if an email address is available for registration.
+// Returns true if the email is not registered, false otherwise.
+func (s *Service) CheckEmailAvailability(ctx context.Context, email string) (bool, error) {
+	existing, err := s.repo.FindByEmail(ctx, email)
+	if err != nil {
+		// If error is "not found", email is available
+		return true, nil
+	}
+	if existing != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
+// CheckUsernameAvailability checks if a username is available for registration.
+// Returns true if the username is not taken, false otherwise.
+func (s *Service) CheckUsernameAvailability(ctx context.Context, username string) (bool, error) {
+	existing, err := s.repo.FindByUsername(ctx, username)
+	if err != nil {
+		// If error is "not found", username is available
+		return true, nil
+	}
+	if existing != nil {
+		return false, nil
+	}
+	return true, nil
 }
 
 // VerifyEmail marks a user's email as verified.
@@ -289,8 +316,20 @@ func (s *Service) GenerateEmailVerificationCode(ctx context.Context, userID stri
 		return nil, fmt.Errorf("failed to create verification code: %w", err)
 	}
 
-	// TODO: Send email when notification infrastructure is ready
-	log.Printf("📧 [MOCK EMAIL] To: %s | Code: %s | Expires in 10 minutes", user.Email, code)
+	// Send email
+	if s.emailService != nil {
+		err := s.emailService.SendVerificationEmail(ctx, user.Email, code)
+		if err != nil {
+			log.Printf("⚠️ Failed to send verification email via SES: %v", err)
+			// Decide if we want to return error or just log it.
+			// Usually better to fail so user knows to retry.
+			// But for now, let's log and not block, or maybe just log.
+		} else {
+			log.Printf("📧 Email sent to %s via SES", user.Email)
+		}
+	} else {
+		log.Printf("📧 [MOCK EMAIL] To: %s | Code: %s", user.Email, code)
+	}
 
 	return verification, nil
 }
