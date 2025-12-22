@@ -1,0 +1,314 @@
+{
+    "info": {
+        "_postman_id": "titles-service-collection",
+        "name": "Titles Service",
+        "description": "Collection for Titles Service endpoints - manage user and admin defined titles",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Title Management",
+            "item": [
+                {
+                    "name": "Get All Titles",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/titles",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles"
+                            ]
+                        },
+                        "description": "List all titles (admin and user defined)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Admin Titles Only",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/titles?defined_by=admin",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles"
+                            ],
+                            "query": [
+                                {
+                                    "key": "defined_by",
+                                    "value": "admin"
+                                }
+                            ]
+                        },
+                        "description": "List only admin-defined titles"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get User Titles Only",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/titles?defined_by=user",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles"
+                            ],
+                            "query": [
+                                {
+                                    "key": "defined_by",
+                                    "value": "user"
+                                }
+                            ]
+                        },
+                        "description": "List only user-defined titles"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Popular Titles",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/titles/popular?limit=10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles",
+                                "popular"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        },
+                        "description": "Get most used titles (sorted by used_by_count)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Title by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/titles/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "a963ee35-e188-48c6-a523-75ef7705e14b",
+                                    "description": "Title ID"
+                                }
+                            ]
+                        },
+                        "description": "Get a specific title by its ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create User Title",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"PhD Student\",\n    \"description\": \"Pursuing doctoral degree\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/titles",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles"
+                            ]
+                        },
+                        "description": "Create a new user-defined title (defined_by = 'user')"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Admin Title",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Senior Mentor\",\n    \"description\": \"Experienced mentor with proven track record\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/titles/admin",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles",
+                                "admin"
+                            ]
+                        },
+                        "description": "Create a new admin-defined title (defined_by = 'admin')"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Title",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Updated Title Name\",\n    \"description\": \"Updated description for the title\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/titles/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "a963ee35-e188-48c6-a523-75ef7705e14b",
+                                    "description": "Title ID"
+                                }
+                            ]
+                        },
+                        "description": "Update an existing title's name and/or description"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Title",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/titles/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "a963ee35-e188-48c6-a523-75ef7705e14b",
+                                    "description": "Title ID"
+                                }
+                            ]
+                        },
+                        "description": "Delete a title (only if used_by_count is 0)"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Usage Tracking",
+            "item": [
+                {
+                    "name": "Increment Usage Count",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/titles/:id/increment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles",
+                                ":id",
+                                "increment"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "a963ee35-e188-48c6-a523-75ef7705e14b",
+                                    "description": "Title ID"
+                                }
+                            ]
+                        },
+                        "description": "Increment used_by_count when a user selects this title"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Decrement Usage Count",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/titles/:id/decrement",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "titles",
+                                ":id",
+                                "decrement"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "a963ee35-e188-48c6-a523-75ef7705e14b",
+                                    "description": "Title ID"
+                                }
+                            ]
+                        },
+                        "description": "Decrement used_by_count when a user removes this title (minimum 0)"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8085/v1",
+            "type": "string"
+        }
+    ]
+}
