@@ -30,6 +30,7 @@ export interface UserProfile {
   title?: string;        // e.g. "Senior Engineer"
   place?: string;        // e.g. "San Francisco, USA"
   interests?: Interest[]; // List of interest objects
+  level: number;          // Gamification level (default 1)
   
   // Stats
   stats: {

@@ -94,6 +94,7 @@ func (s *profileService) GetUserProfile(ctx context.Context, userID, currentUser
 		Title:     user.Title,
 		Place:     user.Place,
 		Interests: interests,
+		Level:     user.Level,
 		Stats:     *stats,
 		CreatedAt: user.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
@@ -143,6 +144,7 @@ func (s *profileService) GetOwnProfile(ctx context.Context, userID string) (*Own
 		Title:               user.Title,
 		Place:               user.Place,
 		Interests:           interests,
+		Level:               user.Level,
 		Stats:               *stats,
 		EmailVerified:       user.EmailVerified,
 		PhoneVerified:       user.PhoneVerified,

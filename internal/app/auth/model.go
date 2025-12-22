@@ -24,6 +24,7 @@ type User struct {
 	TitleID       *string `json:"title_id,omitempty"`
 	LocationID    *string `json:"location_id,omitempty"`
 	InstitutionID *string `json:"institution_id,omitempty"`
+	Level         int     `json:"level"`
 
 	// Privacy settings
 	WhoCanMessage     string `json:"who_can_message"`

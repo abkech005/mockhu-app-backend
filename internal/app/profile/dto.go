@@ -27,6 +27,7 @@ type ProfileResponse struct {
 	Place                  string              `json:"place,omitempty"`
 	Interests              []interest.Interest `json:"interests,omitempty"`
 	Institution            *InstitutionInfo    `json:"institution,omitempty"`
+	Level                  int                 `json:"level"`
 	Stats                  ProfileStats        `json:"stats"`
 	IsFollowing            bool                `json:"is_following"`
 	IsFollowedBy           bool                `json:"is_followed_by"`
@@ -57,6 +58,7 @@ type OwnProfileResponse struct {
 	Place               string              `json:"place,omitempty"`
 	Interests           []interest.Interest `json:"interests,omitempty"`
 	Institution         *InstitutionInfo    `json:"institution,omitempty"`
+	Level               int                 `json:"level"`
 	Stats               ProfileStats        `json:"stats"`
 	PrivacySettings     PrivacySettings     `json:"privacy_settings"`
 	EmailVerified       bool                `json:"email_verified"`
