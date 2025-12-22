@@ -4,13 +4,22 @@ import "time"
 
 // Interest represents a predefined interest that users can select
 type Interest struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Slug      string    `json:"slug"`
-	Category  string    `json:"category"`
-	Icon      string    `json:"icon,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Slug        string    `json:"slug"`
+	Category    string    `json:"category"`
+	Icon        string    `json:"icon,omitempty"`
+	DefinedBy   string    `json:"defined_by"`
+	UsedByCount int       `json:"used_by_count"`
+	Description string    `json:"description,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
 }
+
+// DefinedBy constants
+const (
+	DefinedByAdmin = "admin"
+	DefinedByUser  = "user"
+)
 
 // UserInterest represents a user's selected interest
 type UserInterest struct {

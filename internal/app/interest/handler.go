@@ -171,7 +171,7 @@ func (h *Handler) CreateInterest(c *fiber.Ctx) error {
 		})
 	}
 
-	interest, err := h.service.CreateInterest(c.Context(), req.Name, req.Slug, req.Category, req.Icon)
+	interest, err := h.service.CreateInterest(c.Context(), req.Name, req.Slug, req.Category, req.Icon, req.Description)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -181,5 +181,88 @@ func (h *Handler) CreateInterest(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(CreateInterestResponse{
 		Message:  "interest created successfully",
 		Interest: *interest,
+	})
+}
+
+// CreateUserInterest handles POST /v1/interests/user (user-defined interest)
+func (h *Handler) CreateUserInterest(c *fiber.Ctx) error {
+	var req CreateInterestRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	interest, err := h.service.CreateUserInterest(c.Context(), req.Name, req.Slug, req.Category, req.Icon, req.Description)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(CreateInterestResponse{
+		Message:  "user interest created successfully",
+		Interest: *interest,
+	})
+}
+
+// GetMostUsedInterests handles GET /v1/interests/popular
+func (h *Handler) GetMostUsedInterests(c *fiber.Ctx) error {
+	limit := c.QueryInt("limit", 10)
+
+	interests, err := h.service.GetMostUsedInterests(c.Context(), limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(ListInterestsResponse{
+		Interests: interests,
+		Total:     len(interests),
+	})
+}
+
+// IncrementUsage handles POST /v1/interests/:id/increment
+func (h *Handler) IncrementUsage(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "interest id is required",
+		})
+	}
+
+	count, err := h.service.IncrementUsage(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(IncrementUsageResponse{
+		Message:     "usage incremented successfully",
+		UsedByCount: count,
+	})
+}
+
+// DecrementUsage handles POST /v1/interests/:id/decrement
+func (h *Handler) DecrementUsage(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "interest id is required",
+		})
+	}
+
+	count, err := h.service.DecrementUsage(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(DecrementUsageResponse{
+		Message:     "usage decremented successfully",
+		UsedByCount: count,
 	})
 }

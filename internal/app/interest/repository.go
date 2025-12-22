@@ -10,6 +10,7 @@ type InterestRepository interface {
 	FindBySlug(ctx context.Context, slug string) (*Interest, error)
 	FindBySlugs(ctx context.Context, slugs []string) ([]Interest, error)
 	FindByCategory(ctx context.Context, category string) ([]Interest, error)
+	FindByDefinedBy(ctx context.Context, definedBy string) ([]Interest, error)
 
 	// User Interest Management
 	AddUserInterests(ctx context.Context, userID string, interestIDs []string) error
@@ -18,7 +19,12 @@ type InterestRepository interface {
 	ReplaceUserInterests(ctx context.Context, userID string, interestIDs []string) error
 	UserHasInterest(ctx context.Context, userID string, interestID string) (bool, error)
 
+	// Usage tracking
+	IncrementUsedByCount(ctx context.Context, id string) (int, error)
+	DecrementUsedByCount(ctx context.Context, id string) (int, error)
+
 	// Statistics
 	CountByCategory(ctx context.Context) (map[string]int, error)
 	CountUserInterests(ctx context.Context, userID string) (int, error)
+	GetMostUsedInterests(ctx context.Context, limit int) ([]Interest, error)
 }
