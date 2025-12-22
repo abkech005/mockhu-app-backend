@@ -12,6 +12,7 @@ import (
 	"mockhu-app-backend/internal/app/education"
 	"mockhu-app-backend/internal/app/follow"
 	"mockhu-app-backend/internal/app/interest"
+	"mockhu-app-backend/internal/app/location"
 	"mockhu-app-backend/internal/app/messaging"
 	"mockhu-app-backend/internal/app/onboarding"
 	"mockhu-app-backend/internal/app/post"
@@ -205,6 +206,11 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	educationService := education.NewService(educationRepo)
 	educationHandler := education.NewHandler(educationService)
 
+	// Location dependencies
+	locationRepo := location.NewPostgresLocationRepository(pg.Pool)
+	locationService := location.NewService(locationRepo)
+	locationHandler := location.NewHandler(locationService)
+
 	// Register domain routes
 	// Register comment routes BEFORE post routes to avoid route conflicts
 	comment.RegisterRoutes(app, commentHandler)
@@ -222,6 +228,7 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	suggestion.RegisterRoutes(app, suggestionHandler)
 	title.RegisterRoutes(app, titleHandler)
 	education.RegisterRoutes(app, educationHandler)
+	location.RegisterRoutes(app, locationHandler)
 
 	return app
 }
