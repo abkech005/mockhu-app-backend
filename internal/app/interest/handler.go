@@ -86,6 +86,19 @@ func (h *Handler) AddUserInterests(c *fiber.Ctx) error {
 		})
 	}
 
+	// Check authorization
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+	if currentUserID != userID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "forbidden",
+		})
+	}
+
 	var req AddUserInterestsRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -115,6 +128,19 @@ func (h *Handler) RemoveUserInterest(c *fiber.Ctx) error {
 	userID := c.Params("id")
 	slug := c.Params("slug")
 
+	// Check authorization
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+	if currentUserID != userID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "forbidden",
+		})
+	}
+
 	if userID == "" || slug == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "user_id and interest slug are required",
@@ -138,6 +164,19 @@ func (h *Handler) ReplaceUserInterests(c *fiber.Ctx) error {
 	if userID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "user_id is required",
+		})
+	}
+
+	// Check authorization
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+	if currentUserID != userID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "forbidden",
 		})
 	}
 

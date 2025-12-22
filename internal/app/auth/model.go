@@ -20,6 +20,9 @@ type User struct {
 	// Profile fields
 	Bio           string  `json:"bio,omitempty"`
 	Place         string  `json:"place,omitempty"`
+	Title         string  `json:"title,omitempty"`
+	TitleID       *string `json:"title_id,omitempty"`
+	LocationID    *string `json:"location_id,omitempty"`
 	InstitutionID *string `json:"institution_id,omitempty"`
 
 	// Privacy settings

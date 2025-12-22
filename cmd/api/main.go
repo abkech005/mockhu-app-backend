@@ -178,11 +178,6 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	shareService := share.NewService(shareRepo, authRepo, postRepo)
 	shareHandler := share.NewHandler(shareService)
 
-	// Profile dependencies
-	profileRepo := profile.NewPostgresProfileRepository(pg.Pool)
-	profileService := profile.NewService(profileRepo, pg.Pool)
-	profileHandler := profile.NewHandler(profileService)
-
 	// Messaging dependencies
 	convRepo := messaging.NewPostgresConversationRepository(pg.Pool)
 	msgRepo := messaging.NewPostgresMessageRepository(pg.Pool)
@@ -210,6 +205,11 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	locationRepo := location.NewPostgresLocationRepository(pg.Pool)
 	locationService := location.NewService(locationRepo)
 	locationHandler := location.NewHandler(locationService)
+
+	// Profile dependencies (depends on Title, Location, Interest)
+	profileRepo := profile.NewPostgresProfileRepository(pg.Pool)
+	profileService := profile.NewService(profileRepo, titleRepo, locationRepo, interestService, pg.Pool)
+	profileHandler := profile.NewHandler(profileService)
 
 	// Register domain routes
 	// Register comment routes BEFORE post routes to avoid route conflicts
