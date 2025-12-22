@@ -39,7 +39,7 @@ func (r *PostgresProfileRepository) GetProfileByID(ctx context.Context, userID s
 			title_id,
 			location_id,
 			institution_id,
-			level,
+			COALESCE(level, 1),
 			who_can_message, 
 			who_can_see_posts, 
 			show_followers_list, 
