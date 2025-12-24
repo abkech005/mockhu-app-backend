@@ -200,17 +200,19 @@ func (s *Service) ReplaceUserInterests(ctx context.Context, userID string, slugs
 }
 
 // CreateInterest creates a new interest (admin function)
-func (s *Service) CreateInterest(ctx context.Context, name, slug, category, icon string) (*Interest, error) {
+func (s *Service) CreateInterest(ctx context.Context, name, slug, category, icon, description string) (*Interest, error) {
 	// Validate input
 	if name == "" || slug == "" || category == "" {
 		return nil, errors.New("name, slug, and category are required")
 	}
 
 	interest := &Interest{
-		Name:     name,
-		Slug:     strings.ToLower(strings.TrimSpace(slug)),
-		Category: strings.ToLower(strings.TrimSpace(category)),
-		Icon:     icon,
+		Name:        name,
+		Slug:        strings.ToLower(strings.TrimSpace(slug)),
+		Category:    strings.ToLower(strings.TrimSpace(category)),
+		Icon:        icon,
+		DefinedBy:   DefinedByAdmin,
+		Description: strings.TrimSpace(description),
 	}
 
 	if err := s.repo.Create(ctx, interest); err != nil {
@@ -218,4 +220,72 @@ func (s *Service) CreateInterest(ctx context.Context, name, slug, category, icon
 	}
 
 	return interest, nil
+}
+
+// CreateUserInterest creates a new user-defined interest
+func (s *Service) CreateUserInterest(ctx context.Context, name, slug, category, icon, description string) (*Interest, error) {
+	// Validate input
+	if name == "" || slug == "" || category == "" {
+		return nil, errors.New("name, slug, and category are required")
+	}
+
+	interest := &Interest{
+		Name:        name,
+		Slug:        strings.ToLower(strings.TrimSpace(slug)),
+		Category:    strings.ToLower(strings.TrimSpace(category)),
+		Icon:        icon,
+		DefinedBy:   DefinedByUser,
+		Description: strings.TrimSpace(description),
+	}
+
+	if err := s.repo.Create(ctx, interest); err != nil {
+		return nil, fmt.Errorf("failed to create interest: %w", err)
+	}
+
+	return interest, nil
+}
+
+// GetInterestsByDefinedBy retrieves interests filtered by defined_by
+func (s *Service) GetInterestsByDefinedBy(ctx context.Context, definedBy string) ([]Interest, error) {
+	if definedBy != DefinedByAdmin && definedBy != DefinedByUser {
+		return nil, fmt.Errorf("invalid defined_by value: %s (must be 'admin' or 'user')", definedBy)
+	}
+
+	return s.repo.FindByDefinedBy(ctx, definedBy)
+}
+
+// IncrementUsage increments the used_by_count for an interest
+func (s *Service) IncrementUsage(ctx context.Context, id string) (int, error) {
+	if id == "" {
+		return 0, errors.New("interest ID is required")
+	}
+
+	return s.repo.IncrementUsedByCount(ctx, id)
+}
+
+// DecrementUsage decrements the used_by_count for an interest
+func (s *Service) DecrementUsage(ctx context.Context, id string) (int, error) {
+	if id == "" {
+		return 0, errors.New("interest ID is required")
+	}
+
+	return s.repo.DecrementUsedByCount(ctx, id)
+}
+
+// GetMostUsedInterests returns the most popular interests
+func (s *Service) GetMostUsedInterests(ctx context.Context, limit int) ([]Interest, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	interests, err := s.repo.GetMostUsedInterests(ctx, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get most used interests: %w", err)
+	}
+
+	if interests == nil {
+		interests = []Interest{}
+	}
+
+	return interests, nil
 }

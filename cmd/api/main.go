@@ -9,8 +9,10 @@ import (
 
 	"mockhu-app-backend/internal/app/auth"
 	"mockhu-app-backend/internal/app/comment"
+	"mockhu-app-backend/internal/app/education"
 	"mockhu-app-backend/internal/app/follow"
 	"mockhu-app-backend/internal/app/interest"
+	"mockhu-app-backend/internal/app/location"
 	"mockhu-app-backend/internal/app/messaging"
 	"mockhu-app-backend/internal/app/onboarding"
 	"mockhu-app-backend/internal/app/post"
@@ -176,11 +178,6 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	shareService := share.NewService(shareRepo, authRepo, postRepo)
 	shareHandler := share.NewHandler(shareService)
 
-	// Profile dependencies
-	profileRepo := profile.NewPostgresProfileRepository(pg.Pool)
-	profileService := profile.NewService(profileRepo, pg.Pool)
-	profileHandler := profile.NewHandler(profileService)
-
 	// Messaging dependencies
 	convRepo := messaging.NewPostgresConversationRepository(pg.Pool)
 	msgRepo := messaging.NewPostgresMessageRepository(pg.Pool)
@@ -199,6 +196,21 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	titleService := title.NewService(titleRepo)
 	titleHandler := title.NewHandler(titleService)
 
+	// Education dependencies
+	educationRepo := education.NewPostgresEducationRepository(pg.Pool)
+	educationService := education.NewService(educationRepo)
+	educationHandler := education.NewHandler(educationService)
+
+	// Location dependencies
+	locationRepo := location.NewPostgresLocationRepository(pg.Pool)
+	locationService := location.NewService(locationRepo)
+	locationHandler := location.NewHandler(locationService)
+
+	// Profile dependencies (depends on Title, Location, Interest)
+	profileRepo := profile.NewPostgresProfileRepository(pg.Pool)
+	profileService := profile.NewService(profileRepo, titleRepo, locationRepo, interestService, pg.Pool)
+	profileHandler := profile.NewHandler(profileService)
+
 	// Register domain routes
 	// Register comment routes BEFORE post routes to avoid route conflicts
 	comment.RegisterRoutes(app, commentHandler)
@@ -215,6 +227,8 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	messaging.RegisterRoutes(app, messagingHandler)
 	suggestion.RegisterRoutes(app, suggestionHandler)
 	title.RegisterRoutes(app, titleHandler)
+	education.RegisterRoutes(app, educationHandler)
+	location.RegisterRoutes(app, locationHandler)
 
 	return app
 }

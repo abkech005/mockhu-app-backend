@@ -22,13 +22,13 @@ func NewPostgresInterestRepository(pool *pgxpool.Pool) *PostgresInterestReposito
 // Create adds a new interest to the database
 func (r *PostgresInterestRepository) Create(ctx context.Context, interest *Interest) error {
 	query := `
-		INSERT INTO interests (name, slug, category, icon)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, created_at
+		INSERT INTO interests (name, slug, category, icon, defined_by, description)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, used_by_count, created_at
 	`
 
-	err := r.pool.QueryRow(ctx, query, interest.Name, interest.Slug, interest.Category, interest.Icon).
-		Scan(&interest.ID, &interest.CreatedAt)
+	err := r.pool.QueryRow(ctx, query, interest.Name, interest.Slug, interest.Category, interest.Icon, interest.DefinedBy, nullString(interest.Description)).
+		Scan(&interest.ID, &interest.UsedByCount, &interest.CreatedAt)
 
 	if err != nil {
 		return fmt.Errorf("failed to create interest: %w", err)
@@ -37,10 +37,18 @@ func (r *PostgresInterestRepository) Create(ctx context.Context, interest *Inter
 	return nil
 }
 
+// Helper to convert empty string to nil
+func nullString(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
 // FindAll retrieves all interests from the database
 func (r *PostgresInterestRepository) FindAll(ctx context.Context) ([]Interest, error) {
 	query := `
-		SELECT id, name, slug, category, icon, created_at
+		SELECT id, name, slug, category, icon, defined_by, used_by_count, description, created_at
 		FROM interests
 		ORDER BY category, name
 	`
@@ -54,9 +62,16 @@ func (r *PostgresInterestRepository) FindAll(ctx context.Context) ([]Interest, e
 	var interests []Interest
 	for rows.Next() {
 		var interest Interest
-		err := rows.Scan(&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &interest.CreatedAt)
+		var description, definedBy *string
+		err := rows.Scan(&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &definedBy, &interest.UsedByCount, &description, &interest.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan interest: %w", err)
+		}
+		if description != nil {
+			interest.Description = *description
+		}
+		if definedBy != nil {
+			interest.DefinedBy = *definedBy
 		}
 		interests = append(interests, interest)
 	}
@@ -71,14 +86,15 @@ func (r *PostgresInterestRepository) FindAll(ctx context.Context) ([]Interest, e
 // FindBySlug retrieves an interest by its slug
 func (r *PostgresInterestRepository) FindBySlug(ctx context.Context, slug string) (*Interest, error) {
 	query := `
-		SELECT id, name, slug, category, icon, created_at
+		SELECT id, name, slug, category, icon, defined_by, used_by_count, description, created_at
 		FROM interests
 		WHERE slug = $1
 	`
 
 	var interest Interest
+	var description, definedBy *string
 	err := r.pool.QueryRow(ctx, query, slug).Scan(
-		&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &interest.CreatedAt,
+		&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &definedBy, &interest.UsedByCount, &description, &interest.CreatedAt,
 	)
 
 	if err != nil {
@@ -88,13 +104,20 @@ func (r *PostgresInterestRepository) FindBySlug(ctx context.Context, slug string
 		return nil, fmt.Errorf("failed to find interest: %w", err)
 	}
 
+	if description != nil {
+		interest.Description = *description
+	}
+	if definedBy != nil {
+		interest.DefinedBy = *definedBy
+	}
+
 	return &interest, nil
 }
 
 // FindBySlugs retrieves multiple interests by their slugs
 func (r *PostgresInterestRepository) FindBySlugs(ctx context.Context, slugs []string) ([]Interest, error) {
 	query := `
-		SELECT id, name, slug, category, icon, created_at
+		SELECT id, name, slug, category, icon, defined_by, used_by_count, description, created_at
 		FROM interests
 		WHERE slug = ANY($1)
 		ORDER BY name
@@ -109,9 +132,16 @@ func (r *PostgresInterestRepository) FindBySlugs(ctx context.Context, slugs []st
 	var interests []Interest
 	for rows.Next() {
 		var interest Interest
-		err := rows.Scan(&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &interest.CreatedAt)
+		var description, definedBy *string
+		err := rows.Scan(&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &definedBy, &interest.UsedByCount, &description, &interest.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan interest: %w", err)
+		}
+		if description != nil {
+			interest.Description = *description
+		}
+		if definedBy != nil {
+			interest.DefinedBy = *definedBy
 		}
 		interests = append(interests, interest)
 	}
@@ -122,7 +152,7 @@ func (r *PostgresInterestRepository) FindBySlugs(ctx context.Context, slugs []st
 // FindByCategory retrieves all interests in a specific category
 func (r *PostgresInterestRepository) FindByCategory(ctx context.Context, category string) ([]Interest, error) {
 	query := `
-		SELECT id, name, slug, category, icon, created_at
+		SELECT id, name, slug, category, icon, defined_by, used_by_count, description, created_at
 		FROM interests
 		WHERE category = $1
 		ORDER BY name
@@ -137,9 +167,16 @@ func (r *PostgresInterestRepository) FindByCategory(ctx context.Context, categor
 	var interests []Interest
 	for rows.Next() {
 		var interest Interest
-		err := rows.Scan(&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &interest.CreatedAt)
+		var description, definedBy *string
+		err := rows.Scan(&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &definedBy, &interest.UsedByCount, &description, &interest.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan interest: %w", err)
+		}
+		if description != nil {
+			interest.Description = *description
+		}
+		if definedBy != nil {
+			interest.DefinedBy = *definedBy
 		}
 		interests = append(interests, interest)
 	}
@@ -196,7 +233,7 @@ func (r *PostgresInterestRepository) RemoveUserInterest(ctx context.Context, use
 // GetUserInterests retrieves all interests for a user
 func (r *PostgresInterestRepository) GetUserInterests(ctx context.Context, userID string) ([]Interest, error) {
 	query := `
-		SELECT i.id, i.name, i.slug, i.category, i.icon, i.created_at
+		SELECT i.id, i.name, i.slug, i.category, i.icon, i.defined_by, i.used_by_count, i.description, i.created_at
 		FROM interests i
 		INNER JOIN user_interests ui ON i.id = ui.interest_id
 		WHERE ui.user_id = $1
@@ -212,9 +249,16 @@ func (r *PostgresInterestRepository) GetUserInterests(ctx context.Context, userI
 	var interests []Interest
 	for rows.Next() {
 		var interest Interest
-		err := rows.Scan(&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &interest.CreatedAt)
+		var description, definedBy *string
+		err := rows.Scan(&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &definedBy, &interest.UsedByCount, &description, &interest.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan interest: %w", err)
+		}
+		if description != nil {
+			interest.Description = *description
+		}
+		if definedBy != nil {
+			interest.DefinedBy = *definedBy
 		}
 		interests = append(interests, interest)
 	}
@@ -321,4 +365,116 @@ func (r *PostgresInterestRepository) CountUserInterests(ctx context.Context, use
 	}
 
 	return count, nil
+}
+
+// FindByDefinedBy retrieves all interests defined by admin or user
+func (r *PostgresInterestRepository) FindByDefinedBy(ctx context.Context, definedBy string) ([]Interest, error) {
+	query := `
+		SELECT id, name, slug, category, icon, defined_by, used_by_count, description, created_at
+		FROM interests
+		WHERE defined_by = $1
+		ORDER BY name
+	`
+
+	rows, err := r.pool.Query(ctx, query, definedBy)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query interests by defined_by: %w", err)
+	}
+	defer rows.Close()
+
+	var interests []Interest
+	for rows.Next() {
+		var interest Interest
+		var description, defBy *string
+		err := rows.Scan(&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &defBy, &interest.UsedByCount, &description, &interest.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan interest: %w", err)
+		}
+		if description != nil {
+			interest.Description = *description
+		}
+		if defBy != nil {
+			interest.DefinedBy = *defBy
+		}
+		interests = append(interests, interest)
+	}
+
+	return interests, nil
+}
+
+// IncrementUsedByCount increments the used_by_count for an interest
+func (r *PostgresInterestRepository) IncrementUsedByCount(ctx context.Context, id string) (int, error) {
+	query := `
+		UPDATE interests
+		SET used_by_count = used_by_count + 1
+		WHERE id = $1
+		RETURNING used_by_count
+	`
+
+	var count int
+	err := r.pool.QueryRow(ctx, query, id).Scan(&count)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, fmt.Errorf("interest with id '%s' not found", id)
+		}
+		return 0, fmt.Errorf("failed to increment used_by_count: %w", err)
+	}
+
+	return count, nil
+}
+
+// DecrementUsedByCount decrements the used_by_count for an interest (min 0)
+func (r *PostgresInterestRepository) DecrementUsedByCount(ctx context.Context, id string) (int, error) {
+	query := `
+		UPDATE interests
+		SET used_by_count = GREATEST(used_by_count - 1, 0)
+		WHERE id = $1
+		RETURNING used_by_count
+	`
+
+	var count int
+	err := r.pool.QueryRow(ctx, query, id).Scan(&count)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, fmt.Errorf("interest with id '%s' not found", id)
+		}
+		return 0, fmt.Errorf("failed to decrement used_by_count: %w", err)
+	}
+
+	return count, nil
+}
+
+// GetMostUsedInterests returns the most used interests
+func (r *PostgresInterestRepository) GetMostUsedInterests(ctx context.Context, limit int) ([]Interest, error) {
+	query := `
+		SELECT id, name, slug, category, icon, defined_by, used_by_count, description, created_at
+		FROM interests
+		ORDER BY used_by_count DESC
+		LIMIT $1
+	`
+
+	rows, err := r.pool.Query(ctx, query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query most used interests: %w", err)
+	}
+	defer rows.Close()
+
+	var interests []Interest
+	for rows.Next() {
+		var interest Interest
+		var description, defBy *string
+		err := rows.Scan(&interest.ID, &interest.Name, &interest.Slug, &interest.Category, &interest.Icon, &defBy, &interest.UsedByCount, &description, &interest.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan interest: %w", err)
+		}
+		if description != nil {
+			interest.Description = *description
+		}
+		if defBy != nil {
+			interest.DefinedBy = *defBy
+		}
+		interests = append(interests, interest)
+	}
+
+	return interests, nil
 }

@@ -24,7 +24,7 @@
                                 ""
                             ]
                         },
-                        "description": "List all interests. Optional filter: ?category=tech"
+                        "description": "List all interests. Optional filters: ?category=tech&defined_by=admin"
                     },
                     "response": []
                 },
@@ -73,13 +73,38 @@
                     "response": []
                 },
                 {
+                    "name": "Get Popular Interests",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/interests/popular?limit=10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "interests",
+                                "popular"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        },
+                        "description": "Get most used interests sorted by used_by_count"
+                    },
+                    "response": []
+                },
+                {
                     "name": "Create Interest (Admin)",
                     "request": {
                         "method": "POST",
                         "header": [],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"Machine Learning\",\n    \"slug\": \"machine-learning\",\n    \"category\": \"tech\",\n    \"icon\": \"🤖\"\n}",
+                            "raw": "{\n    \"name\": \"Machine Learning\",\n    \"slug\": \"machine-learning\",\n    \"category\": \"tech\",\n    \"icon\": \"🤖\",\n    \"description\": \"Artificial Intelligence and Machine Learning\"\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -96,7 +121,89 @@
                                 ""
                             ]
                         },
-                        "description": "Create a new interest (admin only)"
+                        "description": "Create a new admin-defined interest"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Interest (User)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Vintage Cars\",\n    \"slug\": \"vintage-cars\",\n    \"category\": \"lifestyle\",\n    \"icon\": \"🚗\",\n    \"description\": \"Classic and vintage automobile enthusiasts\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/interests/user",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "interests",
+                                "user"
+                            ]
+                        },
+                        "description": "Create a new user-defined interest"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Increment Usage Count",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/interests/:id/increment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "interests",
+                                ":id",
+                                "increment"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "interest-uuid-here",
+                                    "description": "Interest ID"
+                                }
+                            ]
+                        },
+                        "description": "Increment used_by_count when a user selects this interest"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Decrement Usage Count",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/interests/:id/decrement",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "interests",
+                                ":id",
+                                "decrement"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "interest-uuid-here",
+                                    "description": "Interest ID"
+                                }
+                            ]
+                        },
+                        "description": "Decrement used_by_count when a user removes this interest"
                     },
                     "response": []
                 }

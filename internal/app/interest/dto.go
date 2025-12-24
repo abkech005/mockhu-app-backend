@@ -52,13 +52,26 @@ type ReplaceUserInterestsResponse struct {
 
 // POST /v1/interests - Create new interest (admin only)
 type CreateInterestRequest struct {
-	Name     string `json:"name" binding:"required,min=2,max=100"`
-	Slug     string `json:"slug" binding:"required,min=2,max=100"`
-	Category string `json:"category" binding:"required"`
-	Icon     string `json:"icon,omitempty"`
+	Name        string `json:"name" binding:"required,min=2,max=100"`
+	Slug        string `json:"slug" binding:"required,min=2,max=100"`
+	Category    string `json:"category" binding:"required"`
+	Icon        string `json:"icon,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 type CreateInterestResponse struct {
 	Message  string   `json:"message"`
 	Interest Interest `json:"interest"`
+}
+
+// POST /v1/interests/:id/increment - Increment used_by_count
+type IncrementUsageResponse struct {
+	Message     string `json:"message"`
+	UsedByCount int    `json:"used_by_count"`
+}
+
+// POST /v1/interests/:id/decrement - Decrement used_by_count
+type DecrementUsageResponse struct {
+	Message     string `json:"message"`
+	UsedByCount int    `json:"used_by_count"`
 }
