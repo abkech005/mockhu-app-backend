@@ -213,7 +213,14 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	postfeedRepo := postfeed.NewPostgresRepository(pg.Pool)
 	postfeedService := postfeed.NewService(postfeedRepo, authRepo)
 	postfeedHandler := postfeed.NewHandler(postfeedService)
-	postfeed.RegisterRoutes(app, postfeedHandler)
+
+	// Engagement dependencies (likes, comments, shares)
+	likeRepo := postfeed.NewPostgresLikeRepository(pg.Pool)
+	postfeedCommentRepo := postfeed.NewPostgresCommentRepository(pg.Pool)
+	shareRepo := postfeed.NewPostgresShareRepository(pg.Pool)
+	engagementHandler := postfeed.NewEngagementHandler(likeRepo, postfeedCommentRepo, shareRepo, authRepo)
+
+	postfeed.RegisterRoutes(app, postfeedHandler, engagementHandler)
 
 	return app
 }

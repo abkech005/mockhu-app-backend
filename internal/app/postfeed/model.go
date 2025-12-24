@@ -84,3 +84,33 @@ func IsValidType(t string) bool {
 	}
 	return false
 }
+
+// Like represents a like on a postfeed
+type Like struct {
+	ID         string    `json:"id"`
+	PostfeedID string    `json:"postfeed_id"`
+	UserID     string    `json:"user_id"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+// Comment represents a comment on a postfeed
+type Comment struct {
+	ID         string    `json:"id"`
+	PostfeedID string    `json:"postfeed_id"`
+	UserID     string    `json:"user_id"`
+	ParentID   *string   `json:"parent_id,omitempty"`
+	Content    string    `json:"content"`
+	IsActive   bool      `json:"is_active"`
+	LikeCount  int       `json:"like_count"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// Share represents a share of a postfeed
+type Share struct {
+	ID         string    `json:"id"`
+	PostfeedID string    `json:"postfeed_id"`
+	UserID     string    `json:"user_id"`
+	Message    string    `json:"message,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+}

@@ -86,3 +86,60 @@ type UpdatePostfeedResponse struct {
 type DeletePostfeedResponse struct {
 	Message string `json:"message"`
 }
+
+// --- Engagement DTOs ---
+
+// CreateCommentRequest for adding a comment
+type CreateCommentRequest struct {
+	Content  string  `json:"content"`
+	ParentID *string `json:"parent_id,omitempty"`
+}
+
+// UpdateCommentRequest for updating a comment
+type UpdateCommentRequest struct {
+	Content string `json:"content"`
+}
+
+// CommentResponse for a single comment
+type CommentResponse struct {
+	ID         string            `json:"id"`
+	PostfeedID string            `json:"postfeed_id"`
+	UserID     string            `json:"user_id"`
+	Author     *AuthorInfo       `json:"author,omitempty"`
+	ParentID   *string           `json:"parent_id,omitempty"`
+	Content    string            `json:"content"`
+	LikeCount  int               `json:"like_count"`
+	CreatedAt  string            `json:"created_at"`
+	UpdatedAt  string            `json:"updated_at"`
+	Replies    []CommentResponse `json:"replies,omitempty"`
+}
+
+// ListCommentsResponse for paginated comments
+type ListCommentsResponse struct {
+	Comments   []CommentResponse `json:"comments"`
+	Total      int               `json:"total"`
+	Page       int               `json:"page"`
+	Limit      int               `json:"limit"`
+	TotalPages int               `json:"total_pages"`
+}
+
+// CreateShareRequest for sharing a postfeed
+type CreateShareRequest struct {
+	Message string `json:"message,omitempty"`
+}
+
+// ShareResponse for a single share
+type ShareResponse struct {
+	ID         string      `json:"id"`
+	PostfeedID string      `json:"postfeed_id"`
+	UserID     string      `json:"user_id"`
+	Author     *AuthorInfo `json:"author,omitempty"`
+	Message    string      `json:"message,omitempty"`
+	CreatedAt  string      `json:"created_at"`
+}
+
+// LikeResponse for like status
+type LikeResponse struct {
+	Liked     bool `json:"liked"`
+	LikeCount int  `json:"like_count"`
+}
