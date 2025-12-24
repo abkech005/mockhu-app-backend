@@ -68,3 +68,40 @@ func (h *Handler) ConfirmAvatarUpload(c *fiber.Ctx) error {
 
 	return c.JSON(response)
 }
+
+// RequestMediaUpload generates a presigned PUT URL for postfeed media.
+// POST /v1/upload/media/request
+func (h *Handler) RequestMediaUpload(c *fiber.Ctx) error {
+	// Get user ID from auth context
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	var req MediaUploadRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	// Set user ID from auth
+	req.UserID = userID
+
+	if req.ContentType == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "content_type is required",
+		})
+	}
+
+	response, err := h.service.RequestMediaUpload(c.Context(), &req)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(response)
+}
