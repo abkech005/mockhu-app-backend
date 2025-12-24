@@ -17,7 +17,7 @@ const (
 const (
 	VisibilityPublic        = "public"
 	VisibilityPrivate       = "private"
-	VisibilityFollowersOnly = "followers_only"
+	VisibilityFollowersOnly = "followers"
 )
 
 // Postfeed represents a social media feed post
@@ -28,6 +28,7 @@ type Postfeed struct {
 	Title        string          `json:"title"`
 	Content      string          `json:"content,omitempty"`
 	Tags         []string        `json:"tags,omitempty"`
+	Media        []MediaItem     `json:"media,omitempty"`
 	Visibility   string          `json:"visibility"`
 	IsAnonymous  bool            `json:"is_anonymous"`
 	IsActive     bool            `json:"is_active"`
@@ -38,6 +39,18 @@ type Postfeed struct {
 	ShareCount   int             `json:"share_count"`
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
+}
+
+// MediaItem represents a media attachment (image, video, etc.)
+type MediaItem struct {
+	URL          string `json:"url"`
+	Type         string `json:"type"` // image, video, audio, document
+	ThumbnailURL string `json:"thumbnail_url,omitempty"`
+	Width        int    `json:"width,omitempty"`
+	Height       int    `json:"height,omitempty"`
+	Duration     int    `json:"duration,omitempty"` // for video/audio in seconds
+	FileName     string `json:"file_name,omitempty"`
+	FileSize     int64  `json:"file_size,omitempty"`
 }
 
 // DoubtMetadata for doubt-type posts

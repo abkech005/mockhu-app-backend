@@ -22,9 +22,15 @@ func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
 
 // Create inserts a new postfeed
 func (r *PostgresRepository) Create(ctx context.Context, p *Postfeed) error {
+	// Marshal media to JSON
+	mediaJSON, err := json.Marshal(p.Media)
+	if err != nil {
+		mediaJSON = []byte("[]")
+	}
+
 	query := `
-		INSERT INTO postfeeds (user_id, type, title, content, tags, visibility, is_anonymous, metadata)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO postfeeds (user_id, type, title, content, tags, media, visibility, is_anonymous, metadata)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id, visibility, created_at, updated_at
 	`
 
@@ -34,6 +40,7 @@ func (r *PostgresRepository) Create(ctx context.Context, p *Postfeed) error {
 		p.Title,
 		p.Content,
 		p.Tags,
+		mediaJSON,
 		p.Visibility,
 		p.IsAnonymous,
 		p.Metadata,
@@ -43,7 +50,7 @@ func (r *PostgresRepository) Create(ctx context.Context, p *Postfeed) error {
 // GetByID retrieves a postfeed by ID
 func (r *PostgresRepository) GetByID(ctx context.Context, id string) (*Postfeed, error) {
 	query := `
-		SELECT id, user_id, type, title, content, tags, visibility, is_anonymous, is_active,
+		SELECT id, user_id, type, title, content, tags, media, visibility, is_anonymous, is_active,
 		       metadata, view_count, like_count, comment_count, share_count,
 		       created_at, updated_at
 		FROM postfeeds
@@ -51,9 +58,10 @@ func (r *PostgresRepository) GetByID(ctx context.Context, id string) (*Postfeed,
 	`
 
 	p := &Postfeed{}
+	var mediaJSON []byte
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&p.ID, &p.UserID, &p.Type, &p.Title, &p.Content, &p.Tags,
-		&p.Visibility, &p.IsAnonymous, &p.IsActive, &p.Metadata, &p.ViewCount,
+		&mediaJSON, &p.Visibility, &p.IsAnonymous, &p.IsActive, &p.Metadata, &p.ViewCount,
 		&p.LikeCount, &p.CommentCount, &p.ShareCount,
 		&p.CreatedAt, &p.UpdatedAt,
 	)
@@ -63,6 +71,12 @@ func (r *PostgresRepository) GetByID(ctx context.Context, id string) (*Postfeed,
 	if err != nil {
 		return nil, fmt.Errorf("failed to get postfeed: %w", err)
 	}
+
+	// Unmarshal media
+	if len(mediaJSON) > 0 {
+		_ = json.Unmarshal(mediaJSON, &p.Media)
+	}
+
 	return p, nil
 }
 
@@ -151,7 +165,7 @@ func (r *PostgresRepository) List(ctx context.Context, filter ListFilter) ([]Pos
 
 	// Main query
 	query := fmt.Sprintf(`
-		SELECT id, user_id, type, title, content, tags, visibility, is_anonymous, is_active,
+		SELECT id, user_id, type, title, content, tags, media, visibility, is_anonymous, is_active,
 		       metadata, view_count, like_count, comment_count, share_count,
 		       created_at, updated_at
 		FROM postfeeds
@@ -171,13 +185,17 @@ func (r *PostgresRepository) List(ctx context.Context, filter ListFilter) ([]Pos
 	var postfeeds []Postfeed
 	for rows.Next() {
 		var p Postfeed
+		var mediaJSON []byte
 		if err := rows.Scan(
 			&p.ID, &p.UserID, &p.Type, &p.Title, &p.Content, &p.Tags,
-			&p.Visibility, &p.IsAnonymous, &p.IsActive, &p.Metadata, &p.ViewCount,
+			&mediaJSON, &p.Visibility, &p.IsAnonymous, &p.IsActive, &p.Metadata, &p.ViewCount,
 			&p.LikeCount, &p.CommentCount, &p.ShareCount,
 			&p.CreatedAt, &p.UpdatedAt,
 		); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan postfeed: %w", err)
+		}
+		if len(mediaJSON) > 0 {
+			_ = json.Unmarshal(mediaJSON, &p.Media)
 		}
 		postfeeds = append(postfeeds, p)
 	}

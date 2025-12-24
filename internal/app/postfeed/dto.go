@@ -10,7 +10,8 @@ type CreatePostfeedRequest struct {
 	Title       string          `json:"title"`
 	Content     string          `json:"content,omitempty"`
 	Tags        []string        `json:"tags,omitempty"`
-	Visibility  string          `json:"visibility,omitempty"` // public, private, followers_only
+	Media       []MediaItem     `json:"media,omitempty"`
+	Visibility  string          `json:"visibility,omitempty"` // public, private, followers
 	IsAnonymous bool            `json:"is_anonymous,omitempty"`
 	Metadata    json.RawMessage `json:"metadata,omitempty"`
 }
@@ -20,6 +21,7 @@ type UpdatePostfeedRequest struct {
 	Title      string          `json:"title,omitempty"`
 	Content    string          `json:"content,omitempty"`
 	Tags       []string        `json:"tags,omitempty"`
+	Media      []MediaItem     `json:"media,omitempty"`
 	Visibility string          `json:"visibility,omitempty"`
 	Metadata   json.RawMessage `json:"metadata,omitempty"`
 }
@@ -44,6 +46,7 @@ type PostfeedResponse struct {
 	Title        string          `json:"title"`
 	Content      string          `json:"content,omitempty"`
 	Tags         []string        `json:"tags,omitempty"`
+	Media        []MediaItem     `json:"media,omitempty"`
 	Visibility   string          `json:"visibility"`
 	IsAnonymous  bool            `json:"is_anonymous"`
 	Metadata     json.RawMessage `json:"metadata,omitempty"`
