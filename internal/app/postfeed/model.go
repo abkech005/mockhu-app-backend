@@ -1,0 +1,86 @@
+package postfeed
+
+import (
+	"encoding/json"
+	"time"
+)
+
+// Post type constants
+const (
+	TypeDoubt    = "doubt"
+	TypeQuiz     = "quiz"
+	TypeProgress = "progress"
+	TypeResource = "resource"
+)
+
+// Postfeed represents a social media feed post
+type Postfeed struct {
+	ID           string          `json:"id"`
+	UserID       string          `json:"user_id"`
+	Type         string          `json:"type"`
+	Title        string          `json:"title"`
+	Content      string          `json:"content,omitempty"`
+	Tags         []string        `json:"tags,omitempty"`
+	IsAnonymous  bool            `json:"is_anonymous"`
+	IsActive     bool            `json:"is_active"`
+	Metadata     json.RawMessage `json:"metadata,omitempty"`
+	ViewCount    int             `json:"view_count"`
+	LikeCount    int             `json:"like_count"`
+	CommentCount int             `json:"comment_count"`
+	ShareCount   int             `json:"share_count"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+}
+
+// DoubtMetadata for doubt-type posts
+type DoubtMetadata struct {
+	Subject      string  `json:"subject,omitempty"`
+	IsSolved     bool    `json:"is_solved"`
+	BestAnswerID *string `json:"best_answer_id,omitempty"`
+}
+
+// QuizQuestion represents a single quiz question
+type QuizQuestion struct {
+	Question     string   `json:"question"`
+	Options      []string `json:"options"`
+	CorrectIndex int      `json:"correct_index"`
+}
+
+// QuizMetadata for quiz-type posts
+type QuizMetadata struct {
+	Questions        []QuizQuestion `json:"questions"`
+	TimeLimitSeconds int            `json:"time_limit_seconds,omitempty"`
+	Difficulty       string         `json:"difficulty,omitempty"` // easy, medium, hard
+}
+
+// ProgressMetadata for progress-type posts
+type ProgressMetadata struct {
+	Milestone   string `json:"milestone,omitempty"`
+	Percentage  int    `json:"percentage,omitempty"`
+	StreakDays  int    `json:"streak_days,omitempty"`
+	BadgeEarned string `json:"badge_earned,omitempty"`
+}
+
+// ResourceMetadata for resource-type posts
+type ResourceMetadata struct {
+	ResourceType    string `json:"resource_type,omitempty"` // video, pdf, link, article
+	URL             string `json:"url,omitempty"`
+	FileURL         string `json:"file_url,omitempty"`
+	Platform        string `json:"platform,omitempty"` // youtube, notion, etc.
+	DurationMinutes int    `json:"duration_minutes,omitempty"`
+}
+
+// ValidTypes returns all valid post types
+func ValidTypes() []string {
+	return []string{TypeDoubt, TypeQuiz, TypeProgress, TypeResource}
+}
+
+// IsValidType checks if a type is valid
+func IsValidType(t string) bool {
+	for _, valid := range ValidTypes() {
+		if t == valid {
+			return true
+		}
+	}
+	return false
+}
