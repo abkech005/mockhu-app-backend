@@ -13,6 +13,13 @@ const (
 	TypeResource = "resource"
 )
 
+// Visibility constants
+const (
+	VisibilityPublic        = "public"
+	VisibilityPrivate       = "private"
+	VisibilityFollowersOnly = "followers_only"
+)
+
 // Postfeed represents a social media feed post
 type Postfeed struct {
 	ID           string          `json:"id"`
@@ -21,6 +28,7 @@ type Postfeed struct {
 	Title        string          `json:"title"`
 	Content      string          `json:"content,omitempty"`
 	Tags         []string        `json:"tags,omitempty"`
+	Visibility   string          `json:"visibility"`
 	IsAnonymous  bool            `json:"is_anonymous"`
 	IsActive     bool            `json:"is_active"`
 	Metadata     json.RawMessage `json:"metadata,omitempty"`

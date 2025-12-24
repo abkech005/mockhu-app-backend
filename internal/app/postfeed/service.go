@@ -35,6 +35,15 @@ func (s *Service) Create(ctx context.Context, userID string, req CreatePostfeedR
 		return nil, errors.New("title must be 255 characters or less")
 	}
 
+	// Validate and set visibility (default to public)
+	visibility := req.Visibility
+	if visibility == "" {
+		visibility = VisibilityPublic
+	}
+	if visibility != VisibilityPublic && visibility != VisibilityPrivate && visibility != VisibilityFollowersOnly {
+		return nil, fmt.Errorf("invalid visibility: %s (must be public, private, or followers_only)", visibility)
+	}
+
 	// Validate type-specific metadata
 	if err := s.validateMetadata(req.Type, req.Metadata); err != nil {
 		return nil, err
@@ -46,6 +55,7 @@ func (s *Service) Create(ctx context.Context, userID string, req CreatePostfeedR
 		Title:       req.Title,
 		Content:     req.Content,
 		Tags:        req.Tags,
+		Visibility:  visibility,
 		IsAnonymous: req.IsAnonymous,
 		Metadata:    req.Metadata,
 	}
@@ -100,6 +110,13 @@ func (s *Service) Update(ctx context.Context, id string, userID string, req Upda
 
 	if req.Tags != nil {
 		updates["tags"] = req.Tags
+	}
+
+	if req.Visibility != "" {
+		if req.Visibility != VisibilityPublic && req.Visibility != VisibilityPrivate && req.Visibility != VisibilityFollowersOnly {
+			return nil, fmt.Errorf("invalid visibility: %s", req.Visibility)
+		}
+		updates["visibility"] = req.Visibility
 	}
 
 	if req.Metadata != nil {
@@ -251,6 +268,7 @@ func (s *Service) toResponse(ctx context.Context, p *Postfeed) (*PostfeedRespons
 		Title:        p.Title,
 		Content:      p.Content,
 		Tags:         p.Tags,
+		Visibility:   p.Visibility,
 		IsAnonymous:  p.IsAnonymous,
 		Metadata:     p.Metadata,
 		ViewCount:    p.ViewCount,

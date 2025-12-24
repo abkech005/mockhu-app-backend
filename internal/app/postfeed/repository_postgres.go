@@ -23,9 +23,9 @@ func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
 // Create inserts a new postfeed
 func (r *PostgresRepository) Create(ctx context.Context, p *Postfeed) error {
 	query := `
-		INSERT INTO postfeeds (user_id, type, title, content, tags, is_anonymous, metadata)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, created_at, updated_at
+		INSERT INTO postfeeds (user_id, type, title, content, tags, visibility, is_anonymous, metadata)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id, visibility, created_at, updated_at
 	`
 
 	return r.db.QueryRow(ctx, query,
@@ -34,15 +34,16 @@ func (r *PostgresRepository) Create(ctx context.Context, p *Postfeed) error {
 		p.Title,
 		p.Content,
 		p.Tags,
+		p.Visibility,
 		p.IsAnonymous,
 		p.Metadata,
-	).Scan(&p.ID, &p.CreatedAt, &p.UpdatedAt)
+	).Scan(&p.ID, &p.Visibility, &p.CreatedAt, &p.UpdatedAt)
 }
 
 // GetByID retrieves a postfeed by ID
 func (r *PostgresRepository) GetByID(ctx context.Context, id string) (*Postfeed, error) {
 	query := `
-		SELECT id, user_id, type, title, content, tags, is_anonymous, is_active,
+		SELECT id, user_id, type, title, content, tags, visibility, is_anonymous, is_active,
 		       metadata, view_count, like_count, comment_count, share_count,
 		       created_at, updated_at
 		FROM postfeeds
@@ -52,7 +53,7 @@ func (r *PostgresRepository) GetByID(ctx context.Context, id string) (*Postfeed,
 	p := &Postfeed{}
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&p.ID, &p.UserID, &p.Type, &p.Title, &p.Content, &p.Tags,
-		&p.IsAnonymous, &p.IsActive, &p.Metadata, &p.ViewCount,
+		&p.Visibility, &p.IsAnonymous, &p.IsActive, &p.Metadata, &p.ViewCount,
 		&p.LikeCount, &p.CommentCount, &p.ShareCount,
 		&p.CreatedAt, &p.UpdatedAt,
 	)
@@ -150,7 +151,7 @@ func (r *PostgresRepository) List(ctx context.Context, filter ListFilter) ([]Pos
 
 	// Main query
 	query := fmt.Sprintf(`
-		SELECT id, user_id, type, title, content, tags, is_anonymous, is_active,
+		SELECT id, user_id, type, title, content, tags, visibility, is_anonymous, is_active,
 		       metadata, view_count, like_count, comment_count, share_count,
 		       created_at, updated_at
 		FROM postfeeds
@@ -172,7 +173,7 @@ func (r *PostgresRepository) List(ctx context.Context, filter ListFilter) ([]Pos
 		var p Postfeed
 		if err := rows.Scan(
 			&p.ID, &p.UserID, &p.Type, &p.Title, &p.Content, &p.Tags,
-			&p.IsAnonymous, &p.IsActive, &p.Metadata, &p.ViewCount,
+			&p.Visibility, &p.IsAnonymous, &p.IsActive, &p.Metadata, &p.ViewCount,
 			&p.LikeCount, &p.CommentCount, &p.ShareCount,
 			&p.CreatedAt, &p.UpdatedAt,
 		); err != nil {
