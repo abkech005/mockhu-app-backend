@@ -3,6 +3,8 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
+	"os"
 	"time"
 
 	"mockhu-app-backend/internal/pkg/jwt"
@@ -45,12 +47,17 @@ func (h *Handler) OAuthCallback(c *fiber.Ctx) error {
 	code := c.Query("code")
 	state := c.Query("state")
 
+	// Frontend redirect URL (configurable via env, defaults to localhost:3000)
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000"
+	}
+
 	// Verify state
 	cookieState := c.Cookies("oauth_state")
 	if state != cookieState {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid oauth state",
-		})
+		// Redirect to frontend with error
+		return c.Redirect(fmt.Sprintf("%s/oauth/callback?error=%s", frontendURL, "invalid_state"))
 	}
 
 	// Clear state cookie
@@ -58,37 +65,35 @@ func (h *Handler) OAuthCallback(c *fiber.Ctx) error {
 
 	result, err := h.service.OAuthSignupOrLogin(c.Context(), provider, code)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		// Redirect to frontend with error
+		return c.Redirect(fmt.Sprintf("%s/oauth/callback?error=%s", frontendURL, "auth_failed"))
 	}
 
 	// Generate real JWT tokens
 	accessToken, err := jwt.GenerateAccessToken(result.User.ID, result.User.Email, result.User.Username)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to generate access token",
-		})
+		return c.Redirect(fmt.Sprintf("%s/oauth/callback?error=%s", frontendURL, "token_error"))
 	}
 
 	refreshToken, err := jwt.GenerateRefreshToken(result.User.ID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to generate refresh token",
-		})
+		return c.Redirect(fmt.Sprintf("%s/oauth/callback?error=%s", frontendURL, "token_error"))
 	}
 
-	return c.JSON(OAuthCallbackResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresIn:    int(jwt.AccessTokenDuration.Seconds()),
-		IsNewUser:    result.IsNewUser,
-		User: &UserInfo{
-			ID:       result.User.ID,
-			Username: result.User.Username,
-			Email:    result.User.Email,
-		},
-	})
+	// Redirect to frontend with tokens
+	redirectURL := fmt.Sprintf(
+		"%s/oauth/callback?access_token=%s&refresh_token=%s&expires_in=%d&is_new_user=%t&user_id=%s&email=%s&username=%s",
+		frontendURL,
+		accessToken,
+		refreshToken,
+		int(jwt.AccessTokenDuration.Seconds()),
+		result.IsNewUser,
+		result.User.ID,
+		result.User.Email,
+		result.User.Username,
+	)
+
+	return c.Redirect(redirectURL)
 }
 
 // OAuthLink links OAuth provider to existing account
