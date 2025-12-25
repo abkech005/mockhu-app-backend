@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"time"
 
+	"mockhu-app-backend/internal/pkg/jwt"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -61,21 +63,25 @@ func (h *Handler) OAuthCallback(c *fiber.Ctx) error {
 		})
 	}
 
-	// In a real app, you would likely generate your OWN JWT tokens here
-	// using result.User.ID.
-	// Since login/signup logic in Handler usually does this, we should reuse it.
-	// But `OAuthSignupOrLogin` returned user and we need tokens.
-	// We haven't implemented JWT generation helper in Service yet (it was TODO).
-	// But `Login` in handler generates dummy tokens. I should duplicate that logic or extract it.
+	// Generate real JWT tokens
+	accessToken, err := jwt.GenerateAccessToken(result.User.ID, result.User.Email, result.User.Username)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to generate access token",
+		})
+	}
 
-	// Duplicate dummy token logic for now as per handler.go
-	accessToken := "dummy_access_token_" + result.User.ID
-	refreshToken := "dummy_refresh_token_" + result.User.ID
+	refreshToken, err := jwt.GenerateRefreshToken(result.User.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to generate refresh token",
+		})
+	}
 
 	return c.JSON(OAuthCallbackResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		ExpiresIn:    3600,
+		ExpiresIn:    int(jwt.AccessTokenDuration.Seconds()),
 		IsNewUser:    result.IsNewUser,
 		User: &UserInfo{
 			ID:       result.User.ID,
