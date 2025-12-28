@@ -2,12 +2,14 @@ package auth
 
 import (
 	"mockhu-app-backend/internal/pkg/jwt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 // Handler handles HTTP requests for authentication endpoints.
 // It uses the Service layer to perform business operations.
+// Note: OAuth handlers are in oauth_handler.go
 type Handler struct {
 	service *Service
 }
@@ -34,29 +36,63 @@ func (h *Handler) Signup(c *fiber.Ctx) error {
 		})
 	}
 
+	// Parse DOB if provided
+	var dob time.Time
+	if req.DOB != "" {
+		parsed, err := time.Parse("2006-01-02", req.DOB)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid date format, use YYYY-MM-DD",
+			})
+		}
+		dob = parsed
+	}
+
 	// Create user and auto-send verification
-	result, err := h.service.Signup(c.Context(), req.Method, req.Email, req.Phone, req.Password)
+	result, err := h.service.Signup(c.Context(), req.Method, req.Email, req.Phone, req.Password, req.FirstName, req.LastName, req.MiddleName, dob)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	response := SignupResponse{
-		UserID:              result.User.ID,
-		VerificationNeeded:  result.NeedsVerification,
-		VerificationChannel: req.Method,
+	// Generate JWT tokens for auto-login
+	accessToken, err := jwt.GenerateAccessToken(result.User.ID, result.User.Email, result.User.Username)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to generate access token",
+		})
 	}
 
-	// Include verification code in response for testing (remove in production)
-	if result.VerificationCode != nil {
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"user_id":              response.UserID,
-			"verification_needed":  response.VerificationNeeded,
-			"verification_channel": response.VerificationChannel,
-			"verification_code":    result.VerificationCode.Code, // TODO: Remove in production
-			"verification_expires": 600,                          // 10 minutes
+	refreshToken, err := jwt.GenerateRefreshToken(result.User.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to generate refresh token",
 		})
+	}
+
+	// Build response with tokens and user data
+	response := fiber.Map{
+		"user_id":              result.User.ID,
+		"verification_needed":  result.NeedsVerification,
+		"verification_channel": req.Method,
+		"access_token":         accessToken,
+		"refresh_token":        refreshToken,
+		"expires_in":           int(jwt.AccessTokenDuration.Seconds()),
+		"user": fiber.Map{
+			"id":         result.User.ID,
+			"email":      result.User.Email,
+			"first_name": result.User.FirstName,
+			"last_name":  result.User.LastName,
+			"username":   result.User.Username,
+			"avatar_url": result.User.AvatarURL,
+		},
+	}
+
+	// Include verification code for testing (remove in production)
+	if result.VerificationCode != nil {
+		response["verification_code"] = result.VerificationCode.Code
+		response["verification_expires"] = 600
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(response)
@@ -123,6 +159,8 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		ExpiresIn:    int(jwt.AccessTokenDuration.Seconds()),
+		Username:     user.Username,
+		AvatarURL:    user.AvatarURL,
 	})
 }
 
@@ -294,5 +332,51 @@ func (h *Handler) VerifyPhone(c *fiber.Ctx) error {
 	return c.JSON(VerifyPhoneResponse{
 		Message:       "Phone verified successfully",
 		PhoneVerified: true,
+	})
+}
+
+// CheckEmail checks if an email address is available for registration.
+func (h *Handler) CheckEmail(c *fiber.Ctx) error {
+	email := c.Query("email")
+
+	if email == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "email query parameter is required",
+		})
+	}
+
+	available, _ := h.service.CheckEmailAvailability(c.Context(), email)
+
+	message := "Email is available"
+	if !available {
+		message = "Email is already registered"
+	}
+
+	return c.JSON(CheckEmailResponse{
+		Available: available,
+		Message:   message,
+	})
+}
+
+// CheckUsername checks if a username is available for registration.
+func (h *Handler) CheckUsername(c *fiber.Ctx) error {
+	username := c.Query("username")
+
+	if username == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "username query parameter is required",
+		})
+	}
+
+	available, _ := h.service.CheckUsernameAvailability(c.Context(), username)
+
+	message := "Username is available"
+	if !available {
+		message = "Username is already taken"
+	}
+
+	return c.JSON(CheckUsernameResponse{
+		Available: available,
+		Message:   message,
 	})
 }

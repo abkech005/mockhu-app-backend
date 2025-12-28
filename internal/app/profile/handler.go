@@ -122,6 +122,64 @@ func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
 	return c.JSON(profile)
 }
 
+// PatchProfile handles PATCH /v1/users/me/profile/
+func (h *Handler) PatchProfile(c *fiber.Ctx) error {
+	return h.UpdateProfile(c)
+}
+
+// UpdateFullProfile handles PUT /v1/users/me/full-profile
+func (h *Handler) UpdateFullProfile(c *fiber.Ctx) error {
+	// Get current user ID from JWT
+	currentUserID, ok := c.Locals("user_id").(string)
+	if !ok || currentUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	// Parse request body
+	var req UpdateFullProfileRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	// Update full profile
+	profile, err := h.service.UpdateFullProfile(c.Context(), currentUserID, &req)
+	if err != nil {
+		// Handle specific errors (similar to UpdateProfile)
+		errMsg := err.Error()
+		if errMsg == "username already taken" {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": "username already taken",
+			})
+		}
+		// Return 400 for validation errors
+		if isValidationError(errMsg) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": errMsg,
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "failed to update profile",
+			"details": errMsg,
+		})
+	}
+
+	return c.JSON(profile)
+}
+
+func isValidationError(msg string) bool {
+	return msg == "first name must be between 1 and 50 characters" ||
+		msg == "last name must be between 1 and 50 characters" ||
+		msg == "bio must not exceed 500 characters" ||
+		msg == "username must be between 3 and 30 characters" ||
+		msg == "username can only contain letters, numbers, and underscores" ||
+		msg == "no fields to update"
+}
+
 // UploadAvatar handles POST /v1/users/me/avatar
 func (h *Handler) UploadAvatar(c *fiber.Ctx) error {
 	// Get current user ID from JWT

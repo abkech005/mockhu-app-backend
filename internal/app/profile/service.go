@@ -4,10 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
+	"mockhu-app-backend/internal/app/interest"
+	"mockhu-app-backend/internal/app/location"
+	"mockhu-app-backend/internal/app/title"
 	"mockhu-app-backend/internal/pkg/avatar"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 // ProfileService defines the business logic for profile operations
@@ -18,6 +23,7 @@ type ProfileService interface {
 
 	// Profile management
 	UpdateProfile(ctx context.Context, userID string, req *UpdateProfileRequest) (*ProfileResponse, error)
+	UpdateFullProfile(ctx context.Context, userID string, req *UpdateFullProfileRequest) (*ProfileResponse, error)
 
 	// Avatar management
 	UploadAvatar(ctx context.Context, userID string, fileBytes []byte, filename string) (*AvatarUploadResponse, error)
@@ -34,15 +40,29 @@ type ProfileService interface {
 
 // profileService implements ProfileService
 type profileService struct {
-	profileRepo ProfileRepository
-	db          *pgxpool.Pool
+	profileRepo     ProfileRepository
+	titleRepo       title.TitleRepository
+	locationRepo    location.LocationRepository
+	interestService *interest.Service // Using concrete struct as dependency
+	db              *pgxpool.Pool
+	policy          *bluemonday.Policy
 }
 
 // NewService creates a new profile service
-func NewService(profileRepo ProfileRepository, db *pgxpool.Pool) ProfileService {
+func NewService(
+	profileRepo ProfileRepository,
+	titleRepo title.TitleRepository,
+	locationRepo location.LocationRepository,
+	interestService *interest.Service,
+	db *pgxpool.Pool,
+) ProfileService {
 	return &profileService{
-		profileRepo: profileRepo,
-		db:          db,
+		profileRepo:     profileRepo,
+		titleRepo:       titleRepo,
+		locationRepo:    locationRepo,
+		interestService: interestService,
+		db:              db,
+		policy:          bluemonday.UGCPolicy(),
 	}
 }
 
@@ -60,6 +80,9 @@ func (s *profileService) GetUserProfile(ctx context.Context, userID, currentUser
 		return nil, fmt.Errorf("failed to get profile stats: %w", err)
 	}
 
+	// Get user interests
+	interests, _ := s.interestService.GetUserInterests(ctx, userID)
+
 	// Build response
 	response := &ProfileResponse{
 		ID:        user.ID,
@@ -68,6 +91,10 @@ func (s *profileService) GetUserProfile(ctx context.Context, userID, currentUser
 		LastName:  user.LastName,
 		AvatarURL: user.AvatarURL,
 		Bio:       user.Bio,
+		Title:     user.Title,
+		Place:     user.Place,
+		Interests: interests,
+		Level:     user.Level,
 		Stats:     *stats,
 		CreatedAt: user.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
@@ -100,6 +127,9 @@ func (s *profileService) GetOwnProfile(ctx context.Context, userID string) (*Own
 		return nil, fmt.Errorf("failed to get profile stats: %w", err)
 	}
 
+	// Get user interests
+	interests, _ := s.interestService.GetUserInterests(ctx, userID)
+
 	// Build response with private fields
 	response := &OwnProfileResponse{
 		ID:                  user.ID,
@@ -111,6 +141,10 @@ func (s *profileService) GetOwnProfile(ctx context.Context, userID string) (*Own
 		DateOfBirth:         user.DOB.Format("2006-01-02"),
 		AvatarURL:           user.AvatarURL,
 		Bio:                 user.Bio,
+		Title:               user.Title,
+		Place:               user.Place,
+		Interests:           interests,
+		Level:               user.Level,
 		Stats:               *stats,
 		EmailVerified:       user.EmailVerified,
 		PhoneVerified:       user.PhoneVerified,
@@ -193,6 +227,12 @@ func (s *profileService) UpdateProfile(ctx context.Context, userID string, req *
 		return nil, err
 	}
 
+	// Fetch current profile to handle count decrements
+	currentUser, err := s.profileRepo.GetProfileByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch current profile: %w", err)
+	}
+
 	// Build updates map
 	updates := make(map[string]interface{})
 
@@ -203,10 +243,11 @@ func (s *profileService) UpdateProfile(ctx context.Context, userID string, req *
 		updates["last_name"] = req.LastName
 	}
 	if req.Bio != "" {
-		// Sanitize bio (remove dangerous content)
-		updates["bio"] = req.Bio
+		// Sanitize bio
+		sanitizedBio := s.policy.Sanitize(req.Bio)
+		updates["bio"] = sanitizedBio
 	}
-	if req.Username != "" {
+	if req.Username != "" && req.Username != currentUser.Username {
 		// Check username uniqueness
 		exists, err := s.profileRepo.CheckUsernameExists(ctx, req.Username, userID)
 		if err != nil {
@@ -218,19 +259,147 @@ func (s *profileService) UpdateProfile(ctx context.Context, userID string, req *
 		updates["username"] = req.Username
 	}
 
-	// If no updates, return error
+	// Handle Title logic
+	if req.Title != "" {
+		// Update string column
+		sanitizedTitle := s.policy.Sanitize(req.Title)
+		updates["title"] = sanitizedTitle
+
+		// Find or create title
+		titleObj, err := s.resolveTitle(ctx, sanitizedTitle)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve title: %w", err)
+		}
+		if titleObj != nil {
+			updates["title_id"] = titleObj.ID
+
+			// Decrement old title count if changed
+			if currentUser.TitleID != nil && *currentUser.TitleID != titleObj.ID {
+				_, _ = s.titleRepo.DecrementUsedByCount(ctx, *currentUser.TitleID)
+			}
+			// Increment new title count
+			if currentUser.TitleID == nil || *currentUser.TitleID != titleObj.ID {
+				_, _ = s.titleRepo.IncrementUsedByCount(ctx, titleObj.ID)
+			}
+		}
+	}
+
+	// Handle Place logic
+	if req.Place != "" {
+		// Update string column
+		updates["place"] = req.Place
+
+		// Find or create location
+		locObj, err := s.resolveLocation(ctx, req.Place)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve location: %w", err)
+		}
+
+		if locObj != nil {
+			updates["location_id"] = locObj.ID
+
+			// Decrement old location count if changed
+			if currentUser.LocationID != nil && *currentUser.LocationID != locObj.ID {
+				_, _ = s.locationRepo.DecrementUsedByCount(ctx, *currentUser.LocationID)
+			}
+			// Increment new location count
+			if currentUser.LocationID == nil || *currentUser.LocationID != locObj.ID {
+				_, _ = s.locationRepo.IncrementUsedByCount(ctx, locObj.ID)
+			}
+		} else {
+			// Location not resolved, clear the link
+			updates["location_id"] = nil
+
+			// Decrement old location count if it existed
+			if currentUser.LocationID != nil {
+				_, _ = s.locationRepo.DecrementUsedByCount(ctx, *currentUser.LocationID)
+			}
+		}
+	}
+
+	// If no updates, return (or return current profile)
 	if len(updates) == 0 {
-		return nil, errors.New("no fields to update")
+		return s.GetUserProfile(ctx, userID, userID)
 	}
 
 	// Update profile
-	err := s.profileRepo.UpdateProfile(ctx, userID, updates)
+	err = s.profileRepo.UpdateProfile(ctx, userID, updates)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update profile: %w", err)
 	}
 
 	// Get updated profile
 	return s.GetUserProfile(ctx, userID, userID)
+}
+
+// UpdateFullProfile handles composite profile and interests update
+func (s *profileService) UpdateFullProfile(ctx context.Context, userID string, req *UpdateFullProfileRequest) (*ProfileResponse, error) {
+	// 1. Update Profile Fields
+	profileResp, err := s.UpdateProfile(ctx, userID, &req.UpdateProfileRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Update Interests
+	if req.InterestSlugs != nil {
+		_, err := s.interestService.ReplaceUserInterests(ctx, userID, req.InterestSlugs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update interests: %w", err)
+		}
+	}
+
+	return profileResp, nil
+}
+
+// resolveTitle finds or creates a title
+func (s *profileService) resolveTitle(ctx context.Context, name string) (*title.Title, error) {
+	existing, err := s.titleRepo.FindByName(ctx, name)
+	if err == nil && existing != nil {
+		return existing, nil
+	}
+
+	// Create new title
+	newTitle := &title.Title{
+		Name:      name,
+		DefinedBy: "user",
+	}
+	if err := s.titleRepo.Create(ctx, newTitle); err != nil {
+		return nil, err
+	}
+	return newTitle, nil
+}
+
+// resolveLocation finds or creates a location
+func (s *profileService) resolveLocation(ctx context.Context, place string) (*location.Location, error) {
+	// Simple comma splitting: "City, Country"
+	parts := strings.Split(place, ",")
+	if len(parts) < 2 {
+		// Try search by entire string
+		results, err := s.locationRepo.Search(ctx, place)
+		if err == nil && len(results) > 0 {
+			return &results[0], nil
+		}
+		return nil, nil // Could not resolve
+	}
+
+	city := strings.TrimSpace(parts[0])
+	country := strings.TrimSpace(parts[len(parts)-1]) // Last part is country
+
+	// Try find exact
+	existing, err := s.locationRepo.FindByCityAndCountry(ctx, city, country)
+	if err == nil && existing != nil {
+		return existing, nil
+	}
+
+	// Create new location
+	newLoc := &location.Location{
+		City:    city,
+		Country: country,
+	}
+	if err := s.locationRepo.Create(ctx, newLoc); err != nil {
+		return nil, err
+	}
+	return newLoc, nil
 }
 
 // validateUpdateProfileRequest validates the update profile request

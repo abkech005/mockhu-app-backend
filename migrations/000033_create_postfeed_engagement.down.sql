@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS postfeed_shares CASCADE;
+DROP TABLE IF EXISTS postfeed_comments CASCADE;
+DROP TABLE IF EXISTS postfeed_likes CASCADE;

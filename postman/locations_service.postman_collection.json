@@ -1,0 +1,287 @@
+{
+    "info": {
+        "_postman_id": "locations-service-collection",
+        "name": "Locations Service",
+        "description": "Collection for Locations Service endpoints - manage city/country locations",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Location Management",
+            "item": [
+                {
+                    "name": "Get All Locations",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/locations",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "locations"
+                            ]
+                        },
+                        "description": "List all locations sorted by popularity"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Locations by Country",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/locations?country=India",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "locations"
+                            ],
+                            "query": [
+                                {
+                                    "key": "country",
+                                    "value": "India"
+                                }
+                            ]
+                        },
+                        "description": "List locations filtered by country"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Search Locations (Autocomplete)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/locations/search?q=mum",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "locations",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "mum"
+                                }
+                            ]
+                        },
+                        "description": "Search locations for autocomplete (city or country)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Popular Locations",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/locations/popular?limit=10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "locations",
+                                "popular"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        },
+                        "description": "Get most used locations"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Location by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/locations/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "locations",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "location-uuid-here",
+                                    "description": "Location ID"
+                                }
+                            ]
+                        },
+                        "description": "Get a specific location by ID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Location",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"city\": \"Kota\",\n    \"country\": \"India\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/locations",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "locations"
+                            ]
+                        },
+                        "description": "Create a new location"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Location",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"city\": \"Bengaluru\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/locations/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "locations",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "location-uuid-here",
+                                    "description": "Location ID"
+                                }
+                            ]
+                        },
+                        "description": "Update location city/country"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Location",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/locations/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "locations",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "location-uuid-here",
+                                    "description": "Location ID"
+                                }
+                            ]
+                        },
+                        "description": "Delete a location (only if used_by_count is 0)"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Usage Tracking",
+            "item": [
+                {
+                    "name": "Increment Usage Count",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/locations/:id/increment",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "locations",
+                                ":id",
+                                "increment"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "location-uuid-here",
+                                    "description": "Location ID"
+                                }
+                            ]
+                        },
+                        "description": "Increment used_by_count when a user selects this location"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Decrement Usage Count",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/locations/:id/decrement",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "locations",
+                                ":id",
+                                "decrement"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "location-uuid-here",
+                                    "description": "Location ID"
+                                }
+                            ]
+                        },
+                        "description": "Decrement used_by_count when a user changes location"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8085/v1",
+            "type": "string"
+        }
+    ]
+}

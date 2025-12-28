@@ -4,28 +4,34 @@ import "time"
 
 // User represents the domain model
 type User struct {
-	ID                  string     `json:"id"`
-	Email               string     `json:"email"`
-	EmailVerified       bool       `json:"email_verified"`
-	Phone               string     `json:"phone"`
-	PhoneVerified       bool       `json:"phone_verified"`
-	Username            string     `json:"username"`
-	FirstName           string     `json:"first_name"`
-	LastName            string     `json:"last_name"`
-	DOB                 time.Time  `json:"dob"`
-	PasswordHash        string     `json:"-"` // Never expose in JSON
-	AvatarURL           string     `json:"avatar_url"`
-	
+	ID            string    `json:"id"`
+	Email         string    `json:"email"`
+	EmailVerified bool      `json:"email_verified"`
+	Phone         string    `json:"phone"`
+	PhoneVerified bool      `json:"phone_verified"`
+	Username      string    `json:"username"`
+	FirstName     string    `json:"first_name"`
+	LastName      string    `json:"last_name"`
+	MiddleName    string    `json:"middle_name"`
+	DOB           time.Time `json:"dob"`
+	PasswordHash  string    `json:"-"` // Never expose in JSON
+	AvatarURL     string    `json:"avatar_url"`
+
 	// Profile fields
 	Bio           string  `json:"bio,omitempty"`
+	Place         string  `json:"place,omitempty"`
+	Title         string  `json:"title,omitempty"`
+	TitleID       *string `json:"title_id,omitempty"`
+	LocationID    *string `json:"location_id,omitempty"`
 	InstitutionID *string `json:"institution_id,omitempty"`
-	
+	Level         int     `json:"level"`
+
 	// Privacy settings
 	WhoCanMessage     string `json:"who_can_message"`
 	WhoCanSeePosts    string `json:"who_can_see_posts"`
 	ShowFollowersList bool   `json:"show_followers_list"`
 	ShowFollowingList bool   `json:"show_following_list"`
-	
+
 	IsActive            bool       `json:"is_active"`
 	OnboardingCompleted bool       `json:"onboarding_completed"`
 	OnboardedAt         *time.Time `json:"onboarded_at,omitempty"`

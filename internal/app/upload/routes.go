@@ -1,11 +1,23 @@
 package upload
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"mockhu-app-backend/internal/app/auth"
+	"mockhu-app-backend/internal/infra/r2"
+	"mockhu-app-backend/internal/pkg/middleware"
 
-func RegisterRoutes(app *fiber.App) {
-	handler := NewHandler()
+	"github.com/gofiber/fiber/v2"
+)
+
+func RegisterRoutes(app *fiber.App, r2Client *r2.Client, userRepo auth.UserRepository) {
+	service := NewService(r2Client, userRepo)
+	handler := NewHandler(service)
 
 	upload := app.Group("/v1/upload")
 
-	upload.Post("/avatar", handler.Avatar)
+	// Avatar upload flow
+	upload.Post("/avatar/request", handler.RequestAvatarUpload)
+	upload.Post("/avatar/confirm", handler.ConfirmAvatarUpload)
+
+	// Media upload for postfeeds (requires auth)
+	upload.Post("/media/request", middleware.AuthMiddleware(), handler.RequestMediaUpload)
 }

@@ -8,9 +8,15 @@ import (
 func RegisterRoutes(app *fiber.App, handler *Handler) {
 	// Interest management
 	interests := app.Group("/v1/interests")
-	interests.Get("/", handler.GetAllInterests)         // List all interests (with optional ?category=tech filter)
-	interests.Get("/categories", handler.GetCategories) // List all categories with counts
-	interests.Post("/", handler.CreateInterest)         // Create new interest (admin)
+	interests.Get("/", handler.GetAllInterests)             // List all interests (with optional ?category=tech or ?defined_by=admin filter)
+	interests.Get("/categories", handler.GetCategories)     // List all categories with counts
+	interests.Get("/popular", handler.GetMostUsedInterests) // Get most used interests
+	interests.Post("/", handler.CreateInterest)             // Create new interest (admin)
+	interests.Post("/user", handler.CreateUserInterest)     // Create user-defined interest
+
+	// Usage tracking
+	interests.Post("/:id/increment", handler.IncrementUsage) // Increment used_by_count
+	interests.Post("/:id/decrement", handler.DecrementUsage) // Decrement used_by_count
 
 	// User interests
 	users := app.Group("/v1/users")

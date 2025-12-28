@@ -24,22 +24,22 @@ func NewPostgresUserRepository(pool *pgxpool.Pool) *PostgresUserRepository {
 // Create inserts a new user record into the database.
 // It expects all required user fields to be populated before insertion.
 // Returns an error if the operation fails (e.g., duplicate email, constraint violations).
-// Empty strings for username, phone, first_name, last_name, and avatar_url are stored as NULL.
+// Empty strings for username, phone, first_name, last_name, middle_name, and avatar_url are stored as NULL.
 func (r *PostgresUserRepository) Create(ctx context.Context, user *User) error {
 	query := `INSERT INTO users (
 		id, email, email_verified, phone, phone_verified, username, 
-		first_name, last_name, dob, password_hash, avatar_url, 
+		first_name, last_name, middle_name, dob, password_hash, avatar_url, 
 		is_active, onboarding_completed, onboarded_at,
 		last_login_at, created_at, updated_at
 	) VALUES (
 		$1, $2, $3, NULLIF($4, ''), $5, NULLIF($6, ''), 
-		NULLIF($7, ''), NULLIF($8, ''), $9, $10, NULLIF($11, ''), 
-		$12, $13, $14, $15, $16, $17
+		NULLIF($7, ''), NULLIF($8, ''), NULLIF($9, ''), $10, $11, NULLIF($12, ''), 
+		$13, $14, $15, $16, $17, $18
 	)`
 
 	_, err := r.pool.Exec(ctx, query,
 		user.ID, user.Email, user.EmailVerified, user.Phone, user.PhoneVerified,
-		user.Username, user.FirstName, user.LastName, user.DOB, user.PasswordHash,
+		user.Username, user.FirstName, user.LastName, user.MiddleName, user.DOB, user.PasswordHash,
 		user.AvatarURL, user.IsActive, user.OnboardingCompleted, user.OnboardedAt,
 		user.LastLoginAt, user.CreatedAt, user.UpdatedAt,
 	)
@@ -219,18 +219,20 @@ func (r *PostgresUserRepository) Update(ctx context.Context, user *User) error {
 			phone = NULLIF($9, ''), 
 			phone_verified = $10, 
 			avatar_url = NULLIF($11, ''),
-			is_active = $12, 
-			onboarding_completed = $13, 
-			onboarded_at = $14,
-			updated_at = $15, 
-			last_login_at = $16
+			bio = NULLIF($12, ''),
+			place = NULLIF($13, ''),
+			is_active = $14, 
+			onboarding_completed = $15, 
+			onboarded_at = $16,
+			updated_at = $17, 
+			last_login_at = $18
 		WHERE id = $1
 	`
 
 	result, err := r.pool.Exec(ctx, query,
 		user.ID, user.Email, user.FirstName, user.LastName, user.DOB,
 		user.Username, user.PasswordHash, user.EmailVerified, user.Phone,
-		user.PhoneVerified, user.AvatarURL, user.IsActive,
+		user.PhoneVerified, user.AvatarURL, user.Bio, user.Place, user.IsActive,
 		user.OnboardingCompleted, user.OnboardedAt,
 		user.UpdatedAt, user.LastLoginAt,
 	)

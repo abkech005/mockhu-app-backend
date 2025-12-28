@@ -1,0 +1,389 @@
+{
+    "info": {
+        "_postman_id": "auth-service-collection",
+        "name": "Auth Service",
+        "description": "Collection for Auth Service endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Core Auth",
+            "item": [
+                {
+                    "name": "Signup",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"method\": \"email\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\",\n    \"phone\": \"\",\n    \"country_code\": \"\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/signup",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "signup"
+                            ]
+                        },
+                        "description": "Register a new user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"identifier\": \"test@example.com\",\n    \"password\": \"password123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "description": "User login via identifier (email/phone) and password."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Verify Signup",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": \"USER_ID_HERE\",\n    \"method\": \"email\",\n    \"code\": \"123456\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/verify",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "verify"
+                            ]
+                        },
+                        "description": "Verify user registration with code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Refresh Token",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"refresh_token\": \"YOUR_REFRESH_TOKEN\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/refresh",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "refresh"
+                            ]
+                        },
+                        "description": "Refresh access token using refresh token."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"refresh_token\": \"YOUR_REFRESH_TOKEN\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/logout",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "logout"
+                            ]
+                        },
+                        "description": "Logout user and invalidate refresh token."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Resend Code",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": \"USER_ID_HERE\",\n    \"method\": \"email\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/resend",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "resend"
+                            ]
+                        },
+                        "description": "Resend verification code."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Verification",
+            "item": [
+                {
+                    "name": "Send Email Verification",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": \"USER_ID_HERE\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/send-email-verification",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "send-email-verification"
+                            ]
+                        },
+                        "description": "Request email verification code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Verify Email",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": \"USER_ID_HERE\",\n    \"code\": \"123456\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/verify-email",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "verify-email"
+                            ]
+                        },
+                        "description": "Confirm email address with code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send Phone Verification",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": \"USER_ID_HERE\",\n    \"phone_number\": \"+1234567890\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/send-phone-verification",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "send-phone-verification"
+                            ]
+                        },
+                        "description": "Request phone verification code."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Verify Phone",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": \"USER_ID_HERE\",\n    \"code\": \"123456\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/verify-phone",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "verify-phone"
+                            ]
+                        },
+                        "description": "Confirm phone number with code."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "OAuth",
+            "item": [
+                {
+                    "name": "Initiate OAuth",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/oauth/google",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "oauth",
+                                "google"
+                            ]
+                        },
+                        "description": "Start OAuth flow. Replace 'google' with 'facebook' or 'apple' as needed."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "OAuth Callback",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/oauth/google/callback",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "oauth",
+                                "google",
+                                "callback"
+                            ]
+                        },
+                        "description": "Callback URL for OAuth provider."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Link OAuth Provider",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"AUTH_CODE_FROM_PROVIDER\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/oauth/google/link",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "oauth",
+                                "google",
+                                "link"
+                            ]
+                        },
+                        "description": "Link an OAuth provider to current account."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Unlink OAuth Provider",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/oauth/google",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "oauth",
+                                "google"
+                            ]
+                        },
+                        "description": "Unlink an OAuth provider from account."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8085/v1/auth",
+            "type": "string"
+        }
+    ]
+}
