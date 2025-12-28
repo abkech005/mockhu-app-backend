@@ -3,7 +3,11 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
+	"os"
 	"time"
+
+	"mockhu-app-backend/internal/pkg/jwt"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -43,12 +47,17 @@ func (h *Handler) OAuthCallback(c *fiber.Ctx) error {
 	code := c.Query("code")
 	state := c.Query("state")
 
+	// Frontend redirect URL (configurable via env, defaults to localhost:3000)
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000"
+	}
+
 	// Verify state
 	cookieState := c.Cookies("oauth_state")
 	if state != cookieState {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid oauth state",
-		})
+		// Redirect to frontend with error
+		return c.Redirect(fmt.Sprintf("%s/oauth/callback?error=%s", frontendURL, "invalid_state"))
 	}
 
 	// Clear state cookie
@@ -56,33 +65,35 @@ func (h *Handler) OAuthCallback(c *fiber.Ctx) error {
 
 	result, err := h.service.OAuthSignupOrLogin(c.Context(), provider, code)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		// Redirect to frontend with error
+		return c.Redirect(fmt.Sprintf("%s/oauth/callback?error=%s", frontendURL, "auth_failed"))
 	}
 
-	// In a real app, you would likely generate your OWN JWT tokens here
-	// using result.User.ID.
-	// Since login/signup logic in Handler usually does this, we should reuse it.
-	// But `OAuthSignupOrLogin` returned user and we need tokens.
-	// We haven't implemented JWT generation helper in Service yet (it was TODO).
-	// But `Login` in handler generates dummy tokens. I should duplicate that logic or extract it.
+	// Generate real JWT tokens
+	accessToken, err := jwt.GenerateAccessToken(result.User.ID, result.User.Email, result.User.Username)
+	if err != nil {
+		return c.Redirect(fmt.Sprintf("%s/oauth/callback?error=%s", frontendURL, "token_error"))
+	}
 
-	// Duplicate dummy token logic for now as per handler.go
-	accessToken := "dummy_access_token_" + result.User.ID
-	refreshToken := "dummy_refresh_token_" + result.User.ID
+	refreshToken, err := jwt.GenerateRefreshToken(result.User.ID)
+	if err != nil {
+		return c.Redirect(fmt.Sprintf("%s/oauth/callback?error=%s", frontendURL, "token_error"))
+	}
 
-	return c.JSON(OAuthCallbackResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresIn:    3600,
-		IsNewUser:    result.IsNewUser,
-		User: &UserInfo{
-			ID:       result.User.ID,
-			Username: result.User.Username,
-			Email:    result.User.Email,
-		},
-	})
+	// Redirect to frontend with tokens
+	redirectURL := fmt.Sprintf(
+		"%s/oauth/callback?access_token=%s&refresh_token=%s&expires_in=%d&is_new_user=%t&user_id=%s&email=%s&username=%s",
+		frontendURL,
+		accessToken,
+		refreshToken,
+		int(jwt.AccessTokenDuration.Seconds()),
+		result.IsNewUser,
+		result.User.ID,
+		result.User.Email,
+		result.User.Username,
+	)
+
+	return c.Redirect(redirectURL)
 }
 
 // OAuthLink links OAuth provider to existing account
