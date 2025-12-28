@@ -83,10 +83,13 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 
 	// Health check endpoint
 	app.Get("/health", func(c *fiber.Ctx) error {
+		hostname, _ := os.Hostname()
 		return c.JSON(fiber.Map{
-			"status":    "ok",
-			"message":   "Mockhu API is running",
-			"timestamp": c.Context().Time().Format("2006-01-02 15:04:05"),
+			"status":      "ok",
+			"message":     "Mockhu API is running",
+			"server":      hostname,
+			"environment": os.Getenv("ENV"),
+			"timestamp":   c.Context().Time().Format("2006-01-02 15:04:05"),
 		})
 	})
 
