@@ -1,0 +1,606 @@
+{
+    "info": {
+        "name": "Postfeed API",
+        "description": "Postfeed endpoints for social media posts with likes, comments, shares, and media",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8085"
+        },
+        {
+            "key": "token",
+            "value": ""
+        },
+        {
+            "key": "postfeed_id",
+            "value": ""
+        },
+        {
+            "key": "comment_id",
+            "value": ""
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Postfeeds",
+            "item": [
+                {
+                    "name": "Create Postfeed (Doubt)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"doubt\",\n  \"title\": \"How to solve quadratic equations?\",\n  \"content\": \"I'm stuck on x² + 5x + 6 = 0. Can someone explain the steps?\",\n  \"tags\": [\"math\", \"algebra\", \"quadratic\"],\n  \"visibility\": \"public\",\n  \"metadata\": {\n    \"subject\": \"Mathematics\",\n    \"is_solved\": false\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Postfeed (Quiz)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"quiz\",\n  \"title\": \"Basic Math Quiz\",\n  \"content\": \"Test your arithmetic skills!\",\n  \"tags\": [\"math\", \"quiz\"],\n  \"visibility\": \"public\",\n  \"metadata\": {\n    \"questions\": [\n      {\n        \"question\": \"What is 2 + 2?\",\n        \"options\": [\"3\", \"4\", \"5\", \"6\"],\n        \"correct_index\": 1\n      },\n      {\n        \"question\": \"What is 10 x 5?\",\n        \"options\": [\"45\", \"50\", \"55\", \"60\"],\n        \"correct_index\": 1\n      }\n    ],\n    \"time_limit_seconds\": 300,\n    \"difficulty\": \"easy\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Postfeed (Progress)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"progress\",\n  \"title\": \"100 Day Streak! 🔥\",\n  \"content\": \"Just completed 100 days of consistent practice!\",\n  \"tags\": [\"milestone\", \"streak\"],\n  \"visibility\": \"public\",\n  \"metadata\": {\n    \"milestone\": \"100 Day Streak\",\n    \"percentage\": 100,\n    \"streak_days\": 100,\n    \"badge_earned\": \"streak_master\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Postfeed (Resource)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"resource\",\n  \"title\": \"Great video on calculus\",\n  \"content\": \"This helped me understand derivatives better\",\n  \"tags\": [\"math\", \"calculus\", \"video\"],\n  \"visibility\": \"public\",\n  \"metadata\": {\n    \"resource_type\": \"video\",\n    \"url\": \"https://youtube.com/watch?v=xxx\",\n    \"platform\": \"youtube\",\n    \"duration_minutes\": 15\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Postfeed with Media",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"doubt\",\n  \"title\": \"What formula is this?\",\n  \"content\": \"Can someone help identify this equation?\",\n  \"tags\": [\"math\", \"help\"],\n  \"visibility\": \"public\",\n  \"media\": [\n    {\n      \"url\": \"https://cdn.example.com/media/image.jpg\",\n      \"type\": \"image\",\n      \"width\": 800,\n      \"height\": 600\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "List All Postfeeds",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds?page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Postfeed by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Postfeeds by Type",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/type/doubt?page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "type",
+                                "doubt"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User's Postfeeds",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/users/{{user_id}}/postfeeds?page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "users",
+                                "{{user_id}}",
+                                "postfeeds"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Postfeed",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Updated Title\",\n  \"content\": \"Updated content here\",\n  \"visibility\": \"followers_only\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Postfeed",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Likes",
+            "item": [
+                {
+                    "name": "Like Postfeed",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}/like",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}",
+                                "like"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Unlike Postfeed",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}/like",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}",
+                                "like"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Like Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}/like",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}",
+                                "like"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Comments",
+            "item": [
+                {
+                    "name": "Create Comment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"content\": \"Great post! Very helpful.\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}/comments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}",
+                                "comments"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Reply",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"content\": \"Thanks for the feedback!\",\n  \"parent_id\": \"{{comment_id}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}/comments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}",
+                                "comments"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "List Comments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}/comments?page=1&limit=20",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}",
+                                "comments"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Comment",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"content\": \"Updated comment text\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}/comments/{{comment_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}",
+                                "comments",
+                                "{{comment_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Comment",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}/comments/{{comment_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}",
+                                "comments",
+                                "{{comment_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Shares",
+            "item": [
+                {
+                    "name": "Share Postfeed",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"message\": \"Check this out!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}/share",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}",
+                                "share"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Share Count",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/postfeeds/{{postfeed_id}}/shares",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "postfeeds",
+                                "{{postfeed_id}}",
+                                "shares"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Media Upload",
+            "item": [
+                {
+                    "name": "Request Media Upload URL",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"content_type\": \"image/jpeg\",\n  \"file_size\": 1024000,\n  \"file_name\": \"my_image.jpg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/upload/media/request",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "upload",
+                                "media",
+                                "request"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

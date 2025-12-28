@@ -8,16 +8,14 @@ import (
 	"syscall"
 
 	"mockhu-app-backend/internal/app/auth"
-	"mockhu-app-backend/internal/app/comment"
 	"mockhu-app-backend/internal/app/education"
 	"mockhu-app-backend/internal/app/follow"
 	"mockhu-app-backend/internal/app/interest"
 	"mockhu-app-backend/internal/app/location"
 	"mockhu-app-backend/internal/app/messaging"
 	"mockhu-app-backend/internal/app/onboarding"
-	"mockhu-app-backend/internal/app/post"
+	"mockhu-app-backend/internal/app/postfeed"
 	"mockhu-app-backend/internal/app/profile"
-	"mockhu-app-backend/internal/app/share"
 	"mockhu-app-backend/internal/app/suggestion"
 	"mockhu-app-backend/internal/app/title"
 	"mockhu-app-backend/internal/app/upload"
@@ -163,21 +161,6 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	followService := follow.NewService(followRepo, authRepo)
 	followHandler := follow.NewHandler(followService)
 
-	// Post dependencies
-	postRepo := post.NewPostgresPostRepository(pg.Pool)
-	postService := post.NewService(postRepo, authRepo)
-	postHandler := post.NewHandler(postService)
-
-	// Comment dependencies
-	commentRepo := comment.NewPostgresCommentRepository(pg.Pool)
-	commentService := comment.NewService(commentRepo, authRepo, postRepo)
-	commentHandler := comment.NewHandler(commentService)
-
-	// Share dependencies
-	shareRepo := share.NewPostgresShareRepository(pg.Pool)
-	shareService := share.NewService(shareRepo, authRepo, postRepo)
-	shareHandler := share.NewHandler(shareService)
-
 	// Messaging dependencies
 	convRepo := messaging.NewPostgresConversationRepository(pg.Pool)
 	msgRepo := messaging.NewPostgresMessageRepository(pg.Pool)
@@ -212,9 +195,6 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 	profileHandler := profile.NewHandler(profileService)
 
 	// Register domain routes
-	// Register comment routes BEFORE post routes to avoid route conflicts
-	comment.RegisterRoutes(app, commentHandler)
-	share.RegisterRoutes(app, shareHandler)
 	auth.RegisterRoutes(app, authHandler)
 	interest.RegisterRoutes(app, interestHandler)
 	onboarding.RegisterRoutes(app, onboardingHandler)
@@ -222,13 +202,25 @@ func setupRouter(pg *dbinfra.Postgres, r2Client *r2.Client) *fiber.App {
 		upload.RegisterRoutes(app, r2Client, authRepo)
 	}
 	follow.RegisterRoutes(app, followHandler)
-	post.RegisterRoutes(app, postHandler)
 	profile.RegisterRoutes(app, profileHandler)
 	messaging.RegisterRoutes(app, messagingHandler)
 	suggestion.RegisterRoutes(app, suggestionHandler)
 	title.RegisterRoutes(app, titleHandler)
 	education.RegisterRoutes(app, educationHandler)
 	location.RegisterRoutes(app, locationHandler)
+
+	// Postfeed dependencies
+	postfeedRepo := postfeed.NewPostgresRepository(pg.Pool)
+	postfeedService := postfeed.NewService(postfeedRepo, authRepo)
+	postfeedHandler := postfeed.NewHandler(postfeedService)
+
+	// Engagement dependencies (likes, comments, shares)
+	likeRepo := postfeed.NewPostgresLikeRepository(pg.Pool)
+	postfeedCommentRepo := postfeed.NewPostgresCommentRepository(pg.Pool)
+	shareRepo := postfeed.NewPostgresShareRepository(pg.Pool)
+	engagementHandler := postfeed.NewEngagementHandler(likeRepo, postfeedCommentRepo, shareRepo, authRepo)
+
+	postfeed.RegisterRoutes(app, postfeedHandler, engagementHandler)
 
 	return app
 }

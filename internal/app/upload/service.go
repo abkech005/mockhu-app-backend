@@ -104,3 +104,70 @@ func (s *Service) ConfirmAvatarUpload(ctx context.Context, req *AvatarConfirmReq
 		AvatarURL: avatarURL,
 	}, nil
 }
+
+// Media upload constants
+const (
+	maxMediaFileSize = 50 * 1024 * 1024 // 50MB for media
+)
+
+var allowedMediaTypes = map[string]string{
+	// Images
+	"image/jpeg": ".jpg",
+	"image/png":  ".png",
+	"image/webp": ".webp",
+	"image/gif":  ".gif",
+	// Videos
+	"video/mp4":       ".mp4",
+	"video/webm":      ".webm",
+	"video/quicktime": ".mov",
+	// Audio
+	"audio/mpeg": ".mp3",
+	"audio/wav":  ".wav",
+	"audio/ogg":  ".ogg",
+	// Documents
+	"application/pdf": ".pdf",
+}
+
+// RequestMediaUpload generates a presigned PUT URL for postfeed media.
+func (s *Service) RequestMediaUpload(ctx context.Context, req *MediaUploadRequest) (*MediaUploadResponse, error) {
+	// Validate content type
+	ext, ok := allowedMediaTypes[req.ContentType]
+	if !ok {
+		return nil, fmt.Errorf("invalid content type: %s", req.ContentType)
+	}
+
+	// Validate file size
+	if req.FileSize > maxMediaFileSize {
+		return nil, fmt.Errorf("file too large: max 50MB allowed")
+	}
+
+	// Determine media type from content type
+	mediaType := "document"
+	if strings.HasPrefix(req.ContentType, "image/") {
+		mediaType = "image"
+	} else if strings.HasPrefix(req.ContentType, "video/") {
+		mediaType = "video"
+	} else if strings.HasPrefix(req.ContentType, "audio/") {
+		mediaType = "audio"
+	}
+
+	// Generate unique key: media/{user_id}/{media_type}/{timestamp}{ext}
+	fileKey := fmt.Sprintf("media/%s/%s/%d%s", req.UserID, mediaType, time.Now().UnixNano(), ext)
+
+	// Generate presigned URL
+	uploadURL, err := s.r2Client.GeneratePresignedPutURL(ctx, fileKey, req.ContentType, presignExpiry)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate upload URL: %w", err)
+	}
+
+	// Get public URL (for use in postfeed after upload)
+	publicURL := s.r2Client.GetPublicURL(fileKey)
+
+	return &MediaUploadResponse{
+		UploadURL:    uploadURL,
+		FileKey:      fileKey,
+		PublicURL:    publicURL,
+		ThumbnailURL: "", // Can be generated later by a job
+		ExpiresIn:    int(presignExpiry.Seconds()),
+	}, nil
+}
